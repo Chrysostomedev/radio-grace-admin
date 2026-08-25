@@ -18,7 +18,7 @@ const animateurSchema = z.object({
   photo: z.any().optional(),
   facebook: z.string().url("URL Facebook invalide").optional().or(z.literal("")),
   whatsapp: z.string().optional(),
-  is_visible: z.boolean().default(true),
+  is_visible: z.boolean().optional().default(true),
 });
 
 type AnimateurFormData = z.infer<typeof animateurSchema>;
@@ -56,7 +56,7 @@ export default function AnimateurForm({
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<AnimateurFormData>({
+  } = useForm({
     resolver: zodResolver(animateurSchema),
     defaultValues: {
       user_id: initialData?.user_id || "",
@@ -143,7 +143,7 @@ export default function AnimateurForm({
                     render={({ field }) => (
                       <select
                         {...field}
-                        className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
+                        className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 text-[#0E241C] font-medium focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
                       >
                         <option value="">Sélectionner un utilisateur...</option>
                         {users.map((user) => {
@@ -178,7 +178,7 @@ export default function AnimateurForm({
                       type="text"
                       placeholder="Nom de scène..."
                       maxLength={255}
-                      className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
+                      className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 text-[#0E241C] font-medium focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20 placeholder:text-[#163A2C]/50"
                     />
                   )}
                 />
@@ -200,7 +200,7 @@ export default function AnimateurForm({
                       {...field}
                       placeholder="Bio de l'animateur..."
                       rows={3}
-                      className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20 resize-none"
+                      className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 text-[#0E241C] font-medium focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20 resize-none placeholder:text-[#163A2C]/50"
                     />
                   )}
                 />
@@ -254,7 +254,7 @@ export default function AnimateurForm({
                         {...field}
                         type="url"
                         placeholder="https://facebook.com/..."
-                        className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
+                        className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 text-[#0E241C] font-medium focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20 placeholder:text-[#163A2C]/50"
                       />
                     )}
                   />
@@ -275,7 +275,7 @@ export default function AnimateurForm({
                         {...field}
                         type="text"
                         placeholder="+226..."
-                        className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
+                        className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 text-[#0E241C] font-medium focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20 placeholder:text-[#163A2C]/50"
                       />
                     )}
                   />
@@ -298,7 +298,7 @@ export default function AnimateurForm({
                         onChange={(e) => field.onChange(e.target.checked)}
                         className="rounded"
                       />
-                      <span className="text-sm text-[#163A2C]/70">Visible</span>
+                      <span className="text-sm font-medium text-[#0E241C]">Visible</span>
                     </label>
                   )}
                 />

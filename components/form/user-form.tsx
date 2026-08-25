@@ -13,7 +13,7 @@ const userSchema = z.object({
   phone: z.string().optional(),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").optional().or(z.literal("")),
   role_id: z.string().min(1, "Rôle requis"),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
@@ -47,7 +47,7 @@ export default function UserForm({
       phone: initialData?.phone || "",
       password: "",
       role_id: initialData?.role_id || "",
-      is_active: initialData?.is_active !== undefined ? initialData.is_active : true,
+      is_active: initialData?.is_active ?? true,
     },
   });
 
@@ -167,7 +167,7 @@ export default function UserForm({
                   {...field}
                   type="password"
                   placeholder={isEditing ? "Laisser vide pour conserver le mot de passe" : "Minimum 8 caractères"}
-                  className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
+                  className="w-full rounded-lg border border-[#163A2C]/10 bg-[#FFFBF0] px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
                 />
               )}
             />

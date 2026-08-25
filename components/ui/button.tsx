@@ -1,10 +1,11 @@
 import * as React from "react";
 
-type Variant = "default" | "ghost" | "outline" | "destructive" | "link";
+type Variant = "default" | "ghost" | "outline" | "destructive" | "link" | "secondary";
 type Size    = "default" | "sm" | "lg" | "icon";
 
 const variantClasses: Record<Variant, string> = {
     default:     "bg-capec-500 text-white hover:bg-capec-600",
+    secondary:   "bg-slate-200 text-slate-900 hover:bg-slate-300",
     ghost:       "bg-transparent hover:bg-gray-100 text-gray-700",
     outline:     "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
     destructive: "bg-red-600 text-white hover:bg-red-700",

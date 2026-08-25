@@ -23,7 +23,7 @@ export default function LivePage() {
   // Mapper la réponse API vers le type LiveSession attendu par les composants
   const mappedSession = liveSession ? mapToLiveSession(liveSession) : null;
 
-  const handleCreateSession = async (payload: LiveSessionPayload) => {
+  const handleCreateSession = async (payload: LiveSessionPayload): Promise<LiveSession | null> => {
     try {
       setSaving(true);
       const newSession = await createSession({
@@ -33,11 +33,14 @@ export default function LivePage() {
 
       if (newSession) {
         toast.success('Session live créée! Configurez OBS avec les identifiants ci-dessus.');
+        return mapToLiveSession(newSession);
       } else {
         toast.error('Erreur lors de la création de la session');
+        return null;
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur');
+      return null;
     } finally {
       setSaving(false);
     }

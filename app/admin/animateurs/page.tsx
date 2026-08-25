@@ -144,24 +144,28 @@ export default function AnimateursPage() {
     try {
       const res = await axios.get<any>(`/admin/animateurs/${id}`);
       const data = res.data || res;
-      setSelectedAnimateur(data.data || data);
+      console.log("✅ Animateur details response:", data);
+      const animateurData = data.data || data;
+      console.log("✅ Animateur object:", animateurData);
+      setSelectedAnimateur(animateurData);
 
       // Charger les émissions de l'animateur
       try {
         const emissionsRes = await axios.get<any>(`/admin/animateurs/${id}/emissions`);
         const emissionsData = emissionsRes.data || emissionsRes;
+        console.log("✅ Emissions response:", emissionsData);
         setSelectedAnimateurEmissions(
           Array.isArray(emissionsData.data) ? emissionsData.data : emissionsData.emissions || []
         );
       } catch (err) {
-        console.error("Erreur chargement émissions", err);
+        console.error("❌ Erreur chargement émissions", err);
         setSelectedAnimateurEmissions([]);
       }
 
       setShowDetails(true);
     } catch (err) {
       toast.error("Erreur lors du chargement des détails");
-      console.error(err);
+      console.error("❌ Erreur chargement détails:", err);
     }
   };
 
@@ -353,7 +357,10 @@ export default function AnimateursPage() {
       {showForm && (
         <AnimateurForm
           isEditing={!!editing}
-          initialData={editing || {}}
+          initialData={editing ? {
+            ...editing,
+            user_id: editing.user_id.toString(),
+          } : {}}
           users={users}
           onSubmit={handleSubmit}
           onClose={() => {

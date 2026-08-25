@@ -17,13 +17,15 @@ export const firebaseDatabaseUrl = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
 // Validation
 export const isFirebaseConfigured = (): boolean => {
   const required = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'] as const;
-  
+
   const allConfigured = required.every((key) => {
     const value = firebaseConfig[key];
-    return value && value.length > 0 && value !== 'AIzaSyD...';
+    return Boolean(value && value.length > 0 && value !== 'AIzaSyD...');
   });
 
-  const vapidConfigured = firebaseVapidKey && firebaseVapidKey.length > 0 && firebaseVapidKey !== 'BMx...';
+  const vapidConfigured = Boolean(
+    firebaseVapidKey && firebaseVapidKey.length > 0 && firebaseVapidKey !== 'BMx...'
+  );
 
   return allConfigured && vapidConfigured;
 };

@@ -105,7 +105,7 @@ export default function AdminEvenementsPage() {
   return (
     <>
       <ReusableForm isOpen={showCreate} onClose={()=>{ setShowCreate(false); setFormInitValues({}); }} title="Nouvel événement RGE" subtitle="Programmez un événement Radio Grâce-Espoir" fields={eventFields} onSubmit={handleCreate} submitLabel="Créer" initialValues={formInitValues} />
-      <ReusableForm isOpen={showEdit} onClose={()=>{ setShowEdit(false); setSelectedEvent(null); }} title="Modifier l'événement RGE" fields={eventFields} onSubmit={handleUpdate} submitLabel="Mettre à jour" initialValues={selectedEvent? { ...selectedEvent, responsable_id: selectedEvent.responsable?.id } : {}} />
+      <ReusableForm isOpen={showEdit} onClose={()=>{ setShowEdit(false); setSelectedEvent(null); }} title="Modifier l'événement RGE" subtitle="Mettez à jour les détails de l'événement" fields={eventFields} onSubmit={handleUpdate} submitLabel="Mettre à jour" initialValues={selectedEvent? { ...selectedEvent, responsable_id: selectedEvent.responsable?.id } : {}} />
 
       <div className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -140,6 +140,8 @@ export default function AdminEvenementsPage() {
         <MainCard
           plannings={planningsForCalendar}
           isLoading={loading}
+          selectedEvent={selectedEvent || undefined}
+          isPanelOpen={showEdit}
           onEventClick={(e: any)=> router.push(`/admin/evenements/${e.id}`)}
           onPanelClose={()=>{}}
           onEventDrop={async()=>{}}

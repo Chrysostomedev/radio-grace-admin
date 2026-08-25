@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Plus, Search, SearchX, Image as ImageIcon, Link2,
@@ -15,7 +15,6 @@ import {
 import { PubliciteModal } from "@/components/modals/PubliciteModal";
 import { Publicite } from "@/types/publicite.types";
 
-// Emplacements réels définis en base (voir migration publicites)
 const POSITIONS = ["PLAYER", "BANNER", "INTERSTITIEL", "PARTENAIRE"] as const;
 
 const POSITION_LABELS: Record<string, string> = {
@@ -25,10 +24,8 @@ const POSITION_LABELS: Record<string, string> = {
   PARTENAIRE: "Partenaire",
 };
 
-export default function PublicitesPage() {
+function PublicitesContent() {
   const searchParams = useSearchParams();
-  // ⚠️ 'position' ici correspond à l'emplacement (PLAYER/BANNER/INTERSTITIEL),
-  // pas à une catégorie partenaire/publicité (qui n'existe pas encore en base).
   const positionFilter = searchParams.get("position");
 
   const { data, isLoading } = usePublicites(positionFilter ?? undefined);
@@ -139,7 +136,6 @@ export default function PublicitesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPublicites.map((pub) => (
             <div key={pub.id} className="bg-white rounded-3xl overflow-hidden border border-[#163A2C]/5 shadow-sm hover:shadow-md hover:border-[#F0A93E]/30 transition-all group flex flex-col">
-              {/* Image Container */}
               <div className="relative h-48 bg-[#FBF6EA] flex items-center justify-center overflow-hidden">
                 {pub.image ? (
                   <img
@@ -151,14 +147,12 @@ export default function PublicitesPage() {
                   <ImageIcon size={48} className="text-[#163A2C]/20" />
                 )}
 
-                {/* Badge Emplacement */}
                 <div className="absolute top-4 left-4">
                   <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg bg-[#163A2C] text-[#F0A93E]">
                     {POSITION_LABELS[pub.position] ?? pub.position}
                   </span>
                 </div>
 
-                {/* Overlay actions */}
                 <div className="absolute inset-0 bg-[#0E241C]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                   <button
                     onClick={() => handleOpenModal(pub)}
@@ -177,7 +171,6 @@ export default function PublicitesPage() {
                 </div>
               </div>
 
-              {/* Infos */}
               <div className="p-5 flex-1 flex flex-col">
                 <h3 className="font-bold text-[#163A2C] text-lg mb-1 truncate" title={pub.titre}>
                   {pub.titre}
@@ -216,7 +209,6 @@ export default function PublicitesPage() {
         </div>
       )}
 
-      {/* Modal CRUD */}
       <PubliciteModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -225,5 +217,17 @@ export default function PublicitesPage() {
         isLoading={isCreating || isUpdating}
       />
     </div>
+  );
+}
+
+export default function PublicitesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-[#163A2C] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <PublicitesContent />
+    </Suspense>
   );
 }

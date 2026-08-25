@@ -11,6 +11,25 @@ export interface DashboardApi {
     date_debut: string; date_echeance: string;
     progression: number; priorite: "FAIBLE"|"MOYEN"|"ELEVE"; statut: string;
   }[];
+  utilisateurs?: {
+    total_users: number;
+    users_actifs: number;
+    par_role?: {
+      admins: number;
+      auditeurs: number;
+      [key: string]: number;
+    };
+    utilisateurs_recents?: Array<{
+      id: number;
+      name: string;
+      email: string;
+      nom_complet: string;
+      role: string;
+      actif: boolean;
+      roles?: Array<{ id: number; name: string }>;
+      created_at: string;
+    }>;
+  };
 }
 
 export const dashboardService = {

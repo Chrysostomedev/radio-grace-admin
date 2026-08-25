@@ -33,7 +33,7 @@ export const actualiteService = {
       page?: number;
       per_page?: number;
     } = {}
-  ) => get("/admin/actualites", params) as Promise<any>,
+  ) => get("/admin/actualites", { params }) as Promise<any>, // 👈 Encapsulé dans { params }
 
   get: (id: number) =>
     get(`/admin/actualites/${id}`) as Promise<{ data: Actualite }>,

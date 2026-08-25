@@ -2,42 +2,57 @@
 
 import { useState, useEffect } from "react";
 import { X, Info, Loader2 } from "lucide-react";
-import type { ProjectStatus, ProjectStatusPayload } from "@/types/admin";
 import { toast } from "sonner";
 
+// Interfaces locales pour éviter l'erreur d'import TS
+export interface ProjectStatus {
+    id: number;
+    code: string;
+    label?: string;
+    color?: string;
+}
+
+export interface ProjectStatusPayload {
+    code: string;
+    color: string;
+    project_id: number;
+    target_status_id: number;
+    position_type: "after" | "before";
+}
+
 const SWATCHES = [
-    "#f97316","#6366f1","#0ea5e9","#10b981",
-    "#f59e0b","#ef4444","#8b5cf6","#ec4899","#14b8a6","#64748b",
+    "#f97316", "#6366f1", "#0ea5e9", "#10b981",
+    "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#64748b",
 ];
 
 interface Props {
-    isOpen:    boolean;
-    onClose:   () => void;
+    isOpen: boolean;
+    onClose: () => void;
     projectId: number;
-    statuses:  ProjectStatus[]; // les 4 statuts fixes retournés par fetchStatusesByProject
-    onSubmit:  (payload: ProjectStatusPayload) => Promise<boolean>;
-    isSaving:  boolean;
+    statuses: ProjectStatus[];
+    onSubmit: (payload: ProjectStatusPayload) => Promise<boolean>;
+    isSaving: boolean;
 }
 
 export default function AddStatusModal({ isOpen, onClose, projectId, statuses, onSubmit, isSaving }: Props) {
-    const [name,         setName]         = useState("");
-    const [code,         setCode]         = useState("");
-    const [color,        setColor]        = useState("#6366f1");
-    const [hexInput,     setHexInput]     = useState("#6366f1");
-    const [targetCode,   setTargetCode]   = useState<"en_cours" | "termine">("en_cours");
+    const [code, setCode] = useState("");
+    const [color, setColor] = useState("#6366f1");
+    const [hexInput, setHexInput] = useState("#6366f1");
+    const [targetCode, setTargetCode] = useState<"en_cours" | "termine">("en_cours");
     const [positionType, setPositionType] = useState<"after" | "before">("after");
 
-    // Reset à chaque ouverture
     useEffect(() => {
         if (isOpen) {
-            setName(""); setCode(""); setColor("#6366f1");
-            setHexInput("#6366f1"); setTargetCode("en_cours"); setPositionType("after");
+            setCode("");
+            setColor("#6366f1");
+            setHexInput("#6366f1");
+            setTargetCode("en_cours");
+            setPositionType("after");
         }
     }, [isOpen]);
 
     if (!isOpen) return null;
 
-    // Retrouve l'ID du statut cible dynamiquement depuis la liste réelle
     const getTargetId = (): number | null => {
         const codes = targetCode === "en_cours"
             ? ["EN_COUR", "EN_COURS", "in_progress", "IN_PROGRESS"]
@@ -50,12 +65,10 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
         return null;
     };
 
-    const handleNameChange = (v: string) => {
-        setName(v);
-        setCode(v.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, ""));
+    const applyColor = (v: string) => { 
+        setColor(v); 
+        setHexInput(v); 
     };
-
-    const applyColor = (v: string) => { setColor(v); setHexInput(v); };
 
     const handleHexInput = (v: string) => {
         setHexInput(v);
@@ -63,7 +76,7 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
     };
 
     const handleSubmit = async () => {
-        if (!name.trim() || !code.trim()) return;
+        if (!code.trim()) return;
         const target_status_id = getTargetId();
         if (!target_status_id) {
             toast.error("Statut cible introuvable — rechargez la page.");
@@ -71,19 +84,18 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
         }
 
         const payload: ProjectStatusPayload = {
-            name:             name.trim(),
-            code:             code.trim(),
+            code: code.trim(),
             color,
-            project_id:       projectId,
+            project_id: projectId,
             target_status_id,
-            position_type:    positionType,
+            position_type: positionType,
         };
         const ok = await onSubmit(payload);
         if (ok) onClose();
     };
 
-    const targetLabel    = targetCode === "en_cours" ? "En cours" : "Terminé";
-    const positionLabel  = positionType === "after" ? "après" : "avant";
+    const targetLabel = targetCode === "en_cours" ? "En cours" : "Terminé";
+    const positionLabel = positionType === "after" ? "après" : "avant";
 
     return (
         <>
@@ -99,7 +111,7 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
                         <div>
                             <h2 className="text-[17px] font-black text-slate-900">Ajouter un statut personnalisé</h2>
                             <p className="text-[12px] text-slate-400 mt-0.5">
-                                Inséré entre <span className="font-bold text-slate-600">En cours</span> et <span className="font-bold text-slate-600">Terminé</span>
+                                Inséré par rapport à <span className="font-bold text-slate-600">{targetLabel}</span>
                             </p>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition">
@@ -110,29 +122,15 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
                     {/* Body */}
                     <div className="px-8 py-6 space-y-5">
 
-                        {/* Nom */}
+                        {/* Code */}
                         <div>
                             <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                Nom du statut
-                            </label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={e => handleNameChange(e.target.value)}
-                                placeholder="ex : En révision"
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-[14px] text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 transition"
-                            />
-                        </div>
-
-                        {/* Code — auto-généré mais éditable */}
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                Code
+                                Code du statut
                             </label>
                             <input
                                 type="text"
                                 value={code}
-                                onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""))}
+                                onChange={e => setCode(e.target.value.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, ""))}
                                 placeholder="ex : EN_REVISION"
                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-[13px] font-mono text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 transition"
                             />
@@ -144,12 +142,10 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
                                 Couleur de la colonne
                             </label>
                             <div className="flex items-center gap-3">
-                                {/* Preview */}
                                 <div
                                     className="w-10 h-10 rounded-xl border border-slate-200 shrink-0 transition-colors duration-150"
                                     style={{ background: color }}
                                 />
-                                {/* Hex input */}
                                 <input
                                     type="text"
                                     value={hexInput}
@@ -157,7 +153,6 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
                                     className="flex-1 px-3 py-2.5 border border-slate-200 rounded-xl text-[13px] font-mono text-slate-900 focus:outline-none focus:border-orange-400 transition"
                                     maxLength={7}
                                 />
-                                {/* Native color picker */}
                                 <div className="relative w-10 h-10 shrink-0">
                                     <div className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center cursor-pointer overflow-hidden">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-slate-400 pointer-events-none">
@@ -172,7 +167,6 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
                                     </div>
                                 </div>
                             </div>
-                            {/* Swatches */}
                             <div className="flex gap-1.5 flex-wrap mt-3">
                                 {SWATCHES.map(sw => (
                                     <button
@@ -238,7 +232,7 @@ export default function AddStatusModal({ isOpen, onClose, projectId, statuses, o
                         </button>
                         <button
                             onClick={handleSubmit}
-                            disabled={!name.trim() || !code.trim() || isSaving}
+                            disabled={!code.trim() || isSaving}
                             className="flex-1 py-3 rounded-2xl bg-[#f97316] text-white font-bold hover:opacity-90 transition text-[13px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isSaving && <Loader2 size={14} className="animate-spin" />}

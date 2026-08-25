@@ -41,7 +41,7 @@ interface ReusableFormProps {
   children?: React.ReactNode;
 }
 
-function MediaPreview({ file, url }: { file?: File; url?: string }) {
+function MediaPreview({ file, url, type = "auto" }: { file?: File; url?: string; type?: "image" | "audio" | "video" | "auto" }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,8 +62,8 @@ function MediaPreview({ file, url }: { file?: File; url?: string }) {
 
   if (!previewUrl) return null;
 
-  const isVideo = previewUrl.match(/\.(mp4|webm|mov)$/i) || file?.type.startsWith("video/");
-  const isAudio = previewUrl.match(/\.(mp3|wav|m4a|aac|ogg)$/i) || file?.type.startsWith("audio/");
+  const isVideo = type === "video" || (type === "auto" && (previewUrl.match(/\.(mp4|webm|mov)$/i) || file?.type.startsWith("video/")));
+  const isAudio = type === "audio" || (type === "auto" && (previewUrl.match(/\.(mp3|wav|m4a|aac|ogg)$/i) || file?.type.startsWith("audio/")));
 
   if (isVideo) {
     return <div className="mt-3 rounded-2xl overflow-hidden bg-black aspect-video"><video src={previewUrl} controls className="w-full h-full" /></div>
@@ -128,9 +128,9 @@ export default function ReusableForm({
                       <MediaPreview file={customValues[field.name] as File} url={getDefault(field)} type={field.previewType || "auto"} />
                     </div>
                   ) : field.type === "select"? (
-                    <Select name={field.name} required={field.required} disabled={field.disabled} icon={field.icon} value={customValues[field.name]!== undefined? String(customValues[field.name]) : undefined} defaultValue={customValues[field.name] === undefined? String(getDefault(field)) : undefined} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCustomChange(field.name, e.target.value)}>
+                    <Select name={field.name} required={field.required} disabled={field.disabled} icon={field.icon} value={String(customValues[field.name] ?? getDefault(field) ?? "")} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCustomChange(field.name, e.target.value)}>
                       <option value="">Cliquez pour sélectionner</option>
-                      {field.options?.map((opt, index) => (<option key={`${opt.value}-${index}`} value={opt.value}>{opt.label}</option>))}
+                      {field.options?.map((opt, index) => (<option key={`opt-${index}-${opt.value}`} value={opt.value}>{opt.label}</option>))}
                     </Select>
                   ) : field.type === "multi-user"? (
                     <MultiUserSelect users={field.options?.map(o => ({ id: o.value, name: o.label }))?? []} selected={customValues[field.name]?? getDefault(field)?? []} onChange={(ids) => handleCustomChange(field.name, ids)} placeholder={field.placeholder} />
@@ -152,8 +152,8 @@ export default function ReusableForm({
                     <Checkbox name={field.name} label={field.label} required={field.required} disabled={field.disabled} defaultChecked={!!getDefault(field)} onChange={(checked) => handleCustomChange(field.name, checked)} />
                   ) : (
                     <>
-                      <Input name={field.name} type={field.type as any} placeholder={field.placeholder} required={field.required} disabled={field.disabled} value={customValues[field.name]!== undefined? String(customValues[field.name]) : undefined} defaultValue={customValues[field.name] === undefined? String(getDefault(field)) : undefined} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomChange(field.name, e.target.value)} />
-                      {field.disabled && (<input type="hidden" name={field.name} value={customValues[field.name]!== undefined? String(customValues[field.name]) : String(getDefault(field))} />)}
+                      <Input name={field.name} type={field.type as any} placeholder={field.placeholder} required={field.required} disabled={field.disabled} value={String(customValues[field.name] ?? getDefault(field) ?? "")} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomChange(field.name, e.target.value)} />
+                      {field.disabled && (<input type="hidden" name={field.name} value={String(customValues[field.name] ?? getDefault(field) ?? "")} />)}
                     </>
                   )}
                 </FormField>

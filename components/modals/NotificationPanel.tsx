@@ -6,18 +6,57 @@ import {
   FolderKanban, CheckSquare, ListTodo, CalendarDays,
   Users, Settings, GitMerge,
 } from "lucide-react";
-import { useNotifications as useAdminNotifications, Notification, NotifSource } from "@/hooks/admin/useNotifications";
-import { useNotifications as useUserNotifications } from "@/hooks/user/useNotifications";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { cookieFunctions } from "@/lib/cookies";
 
-/** Résout le bon hook selon le rôle connecté */
-function useRoleNotifications() {
-  const role = typeof window !== "undefined" ? cookieFunctions.getUserRole() : "ADMIN";
-  const admin = useAdminNotifications();
-  const user  = useUserNotifications();
-  return role === "DOCTOR" || role === "USER" ? user : admin;
+// ── Types locaux ──────────────────────────────────────────────────────────────
+
+export type NotifSource = "project" | "task" | "subtask" | "event" | "member" | "status" | "système";
+
+export interface Notification {
+  id: string;
+  title: string;
+  summary: string;
+  body: string;
+  source: NotifSource;
+  createdAt: string;
+  read: boolean;
+  entityLabel?: string;
+  href?: string;
 }
+
+// ── Données factices (statiques) ──────────────────────────────────────────────
+
+const STATIC_NOTIFICATIONS: Notification[] = [
+  {
+    id: "1",
+    title: "Nouveau projet attribué",
+    summary: "Vous avez été ajouté au projet Radio Grace Admin.",
+    body: "Vous avez été désigné comme administrateur principal du projet Radio Grace Admin. Veuillez vérifier vos droits d'accès.",
+    source: "project",
+    createdAt: new Date().toISOString(),
+    read: false,
+    entityLabel: "Radio Grace Admin",
+    href: "#",
+  },
+  {
+    id: "2",
+    title: "Tâche mise à jour",
+    summary: "La tâche 'Correction des hooks' a changé de statut.",
+    body: "Le statut de la tâche 'Correction des hooks' a été passé à 'Terminé' par l'équipe technique.",
+    source: "task",
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    read: false,
+    entityLabel: "Tâche #402",
+  },
+  {
+    id: "3",
+    title: "Maintenance système",
+    summary: "Une mise à jour système est planifiée ce soir.",
+    body: "Une interruption de service d'environ 15 minutes aura lieu à 23h00 pour maintenance serveur.",
+    source: "système",
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    read: true,
+  },
+];
 
 // ── Helpers temps relatif ─────────────────────────────────────────────────────
 
@@ -30,7 +69,7 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
 }
 
-// ── Config par source — palette orange/blanc ──────────────────────────────────
+// ── Config par source ─────────────────────────────────────────────────────────
 
 const SOURCE_CONFIG: Record<NotifSource, {
   label: string; Icon: React.ElementType;
@@ -83,12 +122,20 @@ interface NotificationPanelProps {
 // ── Panel principal ───────────────────────────────────────────────────────────
 
 export default function NotificationPanel({ isOpen, onClose, initialNotif }: NotificationPanelProps) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, remove } = useRoleNotifications();
-  const { t } = useLanguage();
+  const [notifications, setNotifications] = useState<Notification[]>(STATIC_NOTIFICATIONS);
+  const [activeNotif, setActiveNotif]     = useState<Notification | null>(null);
+  const [detailOpen, setDetailOpen]       = useState(false);
+  const panelRef                          = useRef<HTMLDivElement>(null);
 
-  const [activeNotif, setActiveNotif] = useState<Notification | null>(null);
-  const [detailOpen,  setDetailOpen]  = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   useEffect(() => {
     if (isOpen && initialNotif) { setActiveNotif(initialNotif); setDetailOpen(true); }
@@ -121,12 +168,6 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
     setTimeout(() => setActiveNotif(null), 300);
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (activeNotif?.id === id) handleCloseDetail();
-    remove(id);
-  };
-
   const unread = notifications.filter(n => !n.read);
   const read   = notifications.filter(n => n.read);
 
@@ -134,7 +175,6 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
 
   return (
     <>
-      {/* Overlay */}
       <div className="fixed inset-0 bg-orange-950/10 backdrop-blur-[2px] z-[9990]" />
 
       <div ref={panelRef} className="fixed right-0 top-0 h-full z-[9995] flex w-full md:w-auto">
@@ -148,7 +188,7 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
             transition: "transform 0.35s cubic-bezier(0.32,0,0,1)",
           }}
         >
-          {/* ── Header ── */}
+          {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-orange-100 shrink-0 bg-gradient-to-r from-orange-500 to-orange-400">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-white/20 rounded-2xl flex items-center justify-center">
@@ -156,12 +196,12 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
               </div>
               <div>
                 <h2 className="text-base font-black text-white leading-none">
-                  {t("notifications.title")}
+                  Notifications
                 </h2>
                 <p className="text-[11px] text-orange-100 font-medium mt-0.5">
                   {unreadCount > 0
-                    ? `${unreadCount} ${unreadCount > 1 ? t("notifications.unreads") : t("notifications.unread")}`
-                    : t("notifications.upToDate")}
+                    ? `${unreadCount} non lue${unreadCount > 1 ? "s" : ""}`
+                    : "À jour"}
                 </p>
               </div>
             </div>
@@ -172,7 +212,7 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
                   onClick={markAllAsRead}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition border border-white/20"
                 >
-                  <CheckCheck size={13} /> {t("notifications.markAllRead")}
+                  <CheckCheck size={13} /> Tout marquer comme lu
                 </button>
               )}
               <button
@@ -184,7 +224,7 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
             </div>
           </div>
 
-          {/* ── Corps liste ── */}
+          {/* Corps liste */}
           <div className="flex-1 overflow-y-auto bg-white">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-4 py-20 px-8 text-center">
@@ -192,8 +232,8 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
                   <Bell size={28} className="text-orange-200" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-800">{t("notifications.noNotifications")}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t("notifications.noNotificationsDesc")}</p>
+                  <p className="text-sm font-bold text-gray-800">Aucune notification</p>
+                  <p className="text-xs text-gray-400 mt-1">Vous êtes à jour !</p>
                 </div>
               </div>
             ) : (
@@ -202,7 +242,7 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
                   <div>
                     <div className="px-6 pt-4 pb-2 flex items-center gap-2">
                       <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">
-                        {t("notifications.unreads")}
+                        Non lues
                       </span>
                       <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-orange-500 text-white text-[10px] font-black px-1">
                         {unread.length}
@@ -214,7 +254,6 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
                         notif={notif}
                         isActive={activeNotif?.id === notif.id}
                         onClick={() => handleOpenDetail(notif)}
-                        onDelete={e => handleDelete(notif.id, e)}
                       />
                     ))}
                   </div>
@@ -233,7 +272,6 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
                         notif={notif}
                         isActive={activeNotif?.id === notif.id}
                         onClick={() => handleOpenDetail(notif)}
-                        onDelete={e => handleDelete(notif.id, e)}
                       />
                     ))}
                   </div>
@@ -242,7 +280,7 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
             )}
           </div>
 
-          {/* ── Footer ── */}
+          {/* Footer */}
           {notifications.length > 0 && (
             <div className="px-6 py-4 border-t border-orange-50 shrink-0 bg-white">
               <p className="text-[11px] text-center text-gray-300 font-medium">
@@ -252,7 +290,7 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
           )}
         </div>
 
-        {/* ══ PANNEAU DÉTAIL (slide par-dessus) ════════════════════════ */}
+        {/* ══ PANNEAU DÉTAIL ════════════════════════════════════════════ */}
         <div
           className="absolute right-0 top-0 h-full w-[420px] bg-white flex flex-col"
           style={{
@@ -277,11 +315,10 @@ export default function NotificationPanel({ isOpen, onClose, initialNotif }: Not
 
 // ── Ligne de notification ─────────────────────────────────────────────────────
 
-function NotifRow({ notif, isActive, onClick, onDelete }: {
+function NotifRow({ notif, isActive, onClick }: {
   notif:    Notification;
   isActive: boolean;
   onClick:  () => void;
-  onDelete: (e: React.MouseEvent) => void;
 }) {
   return (
     <div
@@ -294,7 +331,6 @@ function NotifRow({ notif, isActive, onClick, onDelete }: {
             : "hover:bg-orange-50/60 bg-orange-50/20"
       }`}
     >
-      {/* Icône source */}
       <div className="relative shrink-0 mt-0.5">
         <SourceIcon source={notif.source} />
         {!notif.read && (
@@ -305,7 +341,6 @@ function NotifRow({ notif, isActive, onClick, onDelete }: {
         )}
       </div>
 
-      {/* Contenu */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <p className={`text-sm leading-tight ${
@@ -328,7 +363,6 @@ function NotifRow({ notif, isActive, onClick, onDelete }: {
         </div>
       </div>
 
-      {/* Pastille non-lu */}
       {!notif.read && (
         <div className="shrink-0 mt-2">
           <span className="w-2 h-2 rounded-full bg-orange-500 block" />
@@ -341,14 +375,13 @@ function NotifRow({ notif, isActive, onClick, onDelete }: {
 // ── Panneau détail ────────────────────────────────────────────────────────────
 
 function NotifDetail({ notif, onBack }: {
-  notif:   Notification;
-  onBack:  () => void;
+  notif:  Notification;
+  onBack: () => void;
 }) {
   const cfg = getCfg(notif.source);
 
   return (
     <>
-      {/* Header détail */}
       <div className="shrink-0 bg-gradient-to-r from-orange-500 to-orange-400">
         <div className="flex items-center px-6 pt-5 pb-4">
           <button
@@ -359,7 +392,6 @@ function NotifDetail({ notif, onBack }: {
           </button>
         </div>
 
-        {/* Identité de la notif dans le header */}
         <div className="flex items-center gap-4 px-6 pb-6">
           <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
             <cfg.Icon size={22} className="text-white" />
@@ -380,10 +412,7 @@ function NotifDetail({ notif, onBack }: {
         </div>
       </div>
 
-      {/* Corps détail */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5 bg-white">
-
-        {/* Titre + entité */}
         <div>
           <h2 className="text-xl font-black text-gray-900 leading-tight">{notif.title}</h2>
           {notif.entityLabel && (
@@ -396,12 +425,10 @@ function NotifDetail({ notif, onBack }: {
           )}
         </div>
 
-        {/* Corps du message */}
         <div className="bg-orange-50 rounded-2xl border border-orange-100 p-5">
           <p className="text-sm text-gray-700 leading-relaxed font-medium">{notif.body}</p>
         </div>
 
-        {/* Méta */}
         <div className="rounded-2xl border border-orange-100 overflow-hidden">
           {[
             { label: "Type",     value: cfg.label },
@@ -431,7 +458,6 @@ function NotifDetail({ notif, onBack }: {
           ))}
         </div>
 
-        {/* Bouton action (si href disponible) */}
         {notif.href && (
           <a
             href={notif.href}

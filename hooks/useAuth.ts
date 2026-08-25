@@ -1,4 +1,5 @@
 "use client";
+
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
@@ -24,7 +25,7 @@ export function useAuth(requireAuth = true) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const fetchUser = useCallback(async () => {
-    const token = typeof window!== "undefined"? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
     if (!token) {
       setLoading(false);
       if (requireAuth) router.replace("/login");
@@ -35,7 +36,7 @@ export function useAuth(requireAuth = true) {
       setUser(u);
       setIsAuthenticated(true);
     } catch {
-      authService.clearToken();
+      authService.clear();
       setUser(null);
       setIsAuthenticated(false);
       if (requireAuth) router.replace("/login");
@@ -46,21 +47,18 @@ export function useAuth(requireAuth = true) {
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  // Login Step 1 -> si requires_otp, on ne stocke pas le final token, on renvoie temp_token
   const login = async (email: string, password: string) => {
     try {
-      const res: any = await authService.login({ email, password });
+      const res: any = await authService.login(email, password);
       const data = res?.data || res;
 
       if (data?.requires_otp || data?.temp_token) {
-        // Stocke temp_token pour l'étape OTP
         localStorage.setItem("rge_temp_token", data.temp_token);
         toast.success("Code OTP envoyé");
         router.push(`/login/verify-otp?email=${email}`);
         return { requiresOtp: true, temp_token: data.temp_token };
       }
 
-      // Login direct sans OTP (si tu désactives)
       authService.setToken(data.token);
       setUser(data.user);
       toast.success(`Bienvenue, ${data.user.prenom}`);
@@ -75,7 +73,7 @@ export function useAuth(requireAuth = true) {
   const verifyOtp = async (otp: string) => {
     try {
       const temp_token = localStorage.getItem("rge_temp_token") || undefined;
-      const res: any = await authService.verifyOtp({ otp, temp_token });
+      const res: any = await authService.verifyOtp(otp, temp_token);
       const data = res?.data || res;
 
       localStorage.removeItem("rge_temp_token");
@@ -95,7 +93,7 @@ export function useAuth(requireAuth = true) {
 
   const logout = async () => {
     try { await authService.logout(); } catch {}
-    authService.clearToken();
+    authService.clear();
     localStorage.removeItem("rge_temp_token");
     setUser(null);
     setIsAuthenticated(false);
@@ -104,7 +102,7 @@ export function useAuth(requireAuth = true) {
 
   const resendOtp = async () => {
     const temp_token = localStorage.getItem("rge_temp_token") || undefined;
-    await authService.resendOtp({ temp_token });
+    await authService.resendOtp(temp_token);
     toast.success("Nouveau code envoyé");
   };
 

@@ -2,6 +2,22 @@
 import type { AuthUser, Role } from "@/types";
 
 /* ============================================================
+ * PROJETS (structures optionnelles)
+ * ============================================================ */
+export interface Project {
+    id: number;
+    title: string;
+    status: string;
+    priority: string;
+    project_type?: { id: number; name: string } | null;
+    coordinator?: { id: number; first_name: string; last_name: string } | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    progress?: number;
+    members_count?: number;
+}
+
+/* ============================================================
  * UTILISATEURS
  * ============================================================ */
 export type User = AuthUser;
@@ -56,6 +72,7 @@ export interface ProgrammeGrille {
     heure_debut: string; // "HH:mm"
     heure_fin: string;
     is_rediffusion: boolean;
+    programme?: Programme;
 }
 
 export interface ProgrammeGrillePayload {

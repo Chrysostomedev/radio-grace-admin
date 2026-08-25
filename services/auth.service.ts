@@ -5,12 +5,22 @@ import { TOKEN_STORAGE_KEY } from "@/core/axios";
 type LoginData = {
   token: string;
   user: AuthUser;
+  requires_otp?: boolean;
+  temp_token?: string;
 };
 
 export const authService = {
-  // LOGIN DIRECT - plus de temp_token
   login: (email: string, password: string): Promise<ApiResponse<LoginData>> =>
     post("/admin/auth/login", { email, password }),
+
+  verifyOtp: (otp: string, temp_token?: string): Promise<ApiResponse<LoginData>> =>
+    post("/admin/auth/verify-otp", { otp, temp_token }),
+
+  resendOtp: (temp_token?: string): Promise<ApiResponse<{ message: string }>> =>
+    post("/admin/auth/resend-otp", { temp_token }),
+
+  verifyForgotOtp: (email: string, otp: string): Promise<ApiResponse<{ token: string }>> =>
+    post("/admin/auth/verify-forgot-otp", { email, otp }),
 
   logout: (): Promise<ApiResponse<null>> =>
     post("/admin/auth/logout"),
@@ -24,7 +34,6 @@ export const authService = {
   me: (): Promise<AuthUser> =>
     get("/admin/dashboard").then((r: any) => r.user || r.data?.user || r.data || r),
 
-  // storage
   setToken: (t: string) => {
     if (typeof window !== "undefined") localStorage.setItem(TOKEN_STORAGE_KEY, t);
   },

@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { authService } from "@/services/auth.service";
+import { useToast } from "@/context/ToastContext";
 
 const BRAND_GRACE = "bg-[#F0A93E] hover:bg-[#E0972E] text-[#163A2C]";
 const BRAND_GRACE_RING = "focus:border-[#F0A93E] focus:ring-[#F0A93E]/20";
@@ -23,6 +23,7 @@ type LoginValues = z.infer<typeof schema>;
 
 export function LoginForm({ forgotPasswordHref = "/login/password" }: { forgotPasswordHref?: string }) {
   const router = useRouter();
+  const toast = useToast();
   const [showPw, setShowPw] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,7 +41,7 @@ export function LoginForm({ forgotPasswordHref = "/login/password" }: { forgotPa
       if (!data?.token) throw new Error("Token manquant");
 
       authService.setToken(data.token);
-      toast.success(`Bienvenue, ${data.user?.prenom || data.user?.nom_complet || values.email}`);
+      toast.success(`Bienvenue, ${data.user?.prenom || data.user?.nom_complet || values.email}`, "Connexion réussie");
 
       // redirection par rôle
       const role = data.user?.role;
@@ -50,7 +51,7 @@ export function LoginForm({ forgotPasswordHref = "/login/password" }: { forgotPa
       else router.replace("/admin");
 
     } catch (e: any) {
-      toast.error(e?.errorMessage || e?.message || "Identifiants invalides");
+      toast.error(e?.errorMessage || e?.message || "Identifiants invalides", "Erreur de connexion");
     } finally {
       setIsLoading(false);
     }

@@ -1,14 +1,14 @@
 "use client";
 
-import axios from "@/core/axios";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Calendar, LayoutGrid, List, Filter, X } from "lucide-react";
 import EmissionCard from "@/components/cards/EmissionCard";
 import Paginate from "@/components/data/paginate";
 import ReusableForm from "@/components/form/ReusableForm";
 import ConfirmModal from "@/components/modals/ConfirmModal";
-import { useProgrammes } from "@/hooks/admin/useProgrammes";
+import { useProgrammes, useAnimateurs } from "@/hooks/admin/useProgrammes";
+import { useToast } from "@/context/ToastContext";
 import type { FieldConfig } from "@/components/form/ReusableForm";
 import type { Programme } from "@/types/admin";
 
@@ -34,6 +34,7 @@ const JOURS = [
 
 export default function EmissionsPage() {
   const router = useRouter();
+  const toast = useToast();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [jour, setJour] = useState<string>("all");
   const { programmes, loading, search, setSearch, categorie, setCategorie, page, setPage, lastPage, create, update, remove } = useProgrammes();
@@ -41,11 +42,7 @@ export default function EmissionsPage() {
   const [editing, setEditing] = useState<Programme | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Programme | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [animateurs, setAnimateurs] = useState<any[]>([]);
-
-  useEffect(() => {
-    axios.get("/admin/animateurs").then(r => setAnimateurs(r.data.data || r.data || []));
-  }, []);
+  const animateurs = useAnimateurs() || [];
 
   const safeProgrammes = useMemo(() => Array.isArray(programmes)? programmes : [], [programmes]);
 
@@ -66,7 +63,17 @@ export default function EmissionsPage() {
       { label: "Rediffusion", value: "REDIFFUSION" },
       { label: "Inactif", value: "INACTIF" },
     ]},
-    { name: "animateur_id", label: "Animateur", type: "select", required: true, options: animateurs.map(a => ({ label: a.nom_complet || a.nom, value: a.id })), placeholder: "Choisir un animateur" },
+    { 
+      name: "animateur_id", 
+      label: "Animateur", 
+      type: "select", 
+      required: true, 
+      disabled: !animateurs || animateurs.length === 0,
+      options: (animateurs && animateurs.length > 0) 
+        ? animateurs.map(a => ({ label: a.nom_scene || a.name || "Sans nom", value: String(a.id) }))
+        : [], 
+      placeholder: animateurs && animateurs.length === 0 ? "Chargement..." : "Choisir un animateur" 
+    },
     { name: "image", label: "MÉDIA - AFFICHE / AUDIO / VIDÉO", type: "media", accept: "image/*,audio/*,video/*", previewType: "auto", gridSpan: 2 },
     { name: "description", label: "Description", type: "textarea", gridSpan: 2 },
   ];
@@ -75,13 +82,33 @@ export default function EmissionsPage() {
     setSubmitting(true);
     try {
       const fd = new FormData();
+      
+      // Ajouter tous les champs au FormData
       Object.entries(formDataObj).forEach(([k, v]) => {
-        if (v!== null && v!== undefined && v!== "") fd.append(k, v as any);
+        if (v === null || v === undefined || v === "") return;
+        
+        // Si c'est un File ou Blob, l'ajouter directement
+        if (v instanceof File || v instanceof Blob) {
+          fd.append(k, v);
+        } else {
+          // Sinon, convertir en string
+          fd.append(k, String(v));
+        }
       });
-      if (editing) await update(editing.id, fd);
-      else await create(fd);
+
+      if (editing) {
+        await update(editing.id, fd);
+        toast.success(`Émission "${formDataObj.titre}" mise à jour`, "Succès");
+      } else {
+        await create(fd);
+        toast.success(`Nouvelle émission "${formDataObj.titre}" créée`, "Création réussie");
+      }
       setShowForm(false);
       setEditing(null);
+    } catch (err: any) {
+      const errorMsg = err?.errorMessage || err?.message || "Une erreur est survenue";
+      toast.error(errorMsg, "Erreur d'enregistrement");
+      console.error("❌ Erreur création/modification émission:", err);
     } finally {
       setSubmitting(false);
     }
@@ -94,7 +121,7 @@ export default function EmissionsPage() {
     jour: (p.grille?.[0]?.jour?.toLowerCase() as any) || "lundi",
     status: p.en_direct? "live" : p.statut === "ACTIF"? "active" : p.statut === "REDIFFUSION"? "replay" : "pending",
     horaire: p.grille?.[0]? `${p.grille[0].heure_debut} - ${p.grille[0].heure_fin}` : "-",
-    animateur: p.animateur?.nom || "-",
+    animateur: p.animateur?.nom_scene || "-",
     description: p.description || "",
     image: p.image || "/images/emission (3).jpg",
     created_by: "RGE",
@@ -105,8 +132,27 @@ export default function EmissionsPage() {
 
   return (
     <>
-      <ReusableForm isOpen={showForm} onClose={() => { setShowForm(false); setEditing(null); }} title={editing? "Modifier l'émission" : "Nouvelle émission RGE"} subtitle="Audio, Vidéo avec preview moderne" fields={FIELDS} initialValues={editing? {...editing, animateur_id: editing.animateur_id || editing.animateur?.id } : {}} onSubmit={handleSubmit} isSubmitting={submitting} submitLabel={editing? "Mettre à jour" : "Créer l'émission"} />
-      <ConfirmModal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={async () => { if (deleteTarget) { await remove(deleteTarget.id); setDeleteTarget(null); } }} title="Supprimer l'émission" message={`Supprimer « ${deleteTarget?.titre} »?`} confirmLabel="Supprimer" />
+      <ReusableForm isOpen={showForm} onClose={() => { setShowForm(false); setEditing(null); }} title={editing? "Modifier l'émission" : "Nouvelle émission RGE"} subtitle="Audio, Vidéo avec preview moderne" fields={FIELDS} initialValues={editing? {...editing, animateur_id: editing.animateur?.id } : {}} onSubmit={handleSubmit} isSubmitting={submitting} submitLabel={editing? "Mettre à jour" : "Créer l'émission"} />
+      <ConfirmModal 
+        isOpen={!!deleteTarget} 
+        onClose={() => setDeleteTarget(null)} 
+        onConfirm={async () => { 
+          if (deleteTarget) { 
+            try {
+              await remove(deleteTarget.id);
+              toast.success(`Émission "${deleteTarget.titre}" supprimée`, "Suppression réussie");
+              setDeleteTarget(null);
+            } catch (err: any) {
+              const errorMsg = err?.errorMessage || err?.message || "Erreur lors de la suppression";
+              toast.error(errorMsg, "Erreur");
+              console.error("❌ Erreur suppression:", err);
+            }
+          } 
+        }} 
+        title="Supprimer l'émission" 
+        message={`Supprimer « ${deleteTarget?.titre} »?`} 
+        confirmLabel="Supprimer" 
+      />
 
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

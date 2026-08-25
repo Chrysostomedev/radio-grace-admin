@@ -30,8 +30,8 @@ export default function ActualitesPage() {
     { name: "name", label: "Titre actualité", type: "text", required: true, placeholder: "Titre..." },
     { name: "category", label: "Catégorie", type: "select", required: true, options: [{label:"Diocèse Daoa",value:"diocese"},{label:"Église",value:"eglise"},{label:"Vatican",value:"vatican"},{label:"Laïcat",value:"laicat"}] },
     { name: "priority", label: "Mise en avant", type: "select", options: [{label:"À la une",value:"high"},{label:"Important",value:"medium"},{label:"Standard",value:"low"}] },
-    { name: "image", label: "Image de couverture", type: "file", placeholder: "JPG/PNG max 5MB" },
-    { name: "content", label: "Contenu", type: "richtext", gridSpan: 2, placeholder: "Rédigez l'actualité..." },
+    { name: "image", label: "Image de couverture", type: "image-upload", placeholder: "JPG/PNG max 5MB" },
+    { name: "content", label: "Contenu", type: "rich-text", gridSpan: 2, placeholder: "Rédigez l'actualité..." },
   ];
 
   return (

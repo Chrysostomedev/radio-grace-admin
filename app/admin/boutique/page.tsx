@@ -42,7 +42,7 @@ export default function BoutiquePage() {
 
   return (
     <>
-      <ReusableForm isOpen={showForm} onClose={()=>setShowForm(false)} title="Nouveau produit RGE" fields={FIELDS} onSubmit={handleCreate} submitLabel="Ajouter produit" />
+      <ReusableForm isOpen={showForm} onClose={()=>setShowForm(false)} title="Nouveau produit RGE" subtitle="Ajouter un nouveau produit au catalogue" fields={FIELDS} onSubmit={handleCreate} submitLabel="Ajouter produit" />
 
       <div className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

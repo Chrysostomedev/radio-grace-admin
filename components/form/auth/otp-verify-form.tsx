@@ -1,14 +1,15 @@
 "use client";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/auth.service";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
 
 const OTP_LEN = 6; const RESEND_DELAY = 60;
 export function OtpVerifyForm({ email, onSuccess, onBack }: { email: string; onSuccess: (resetToken: string) => void; onBack: () => void; }) {
   const router = useRouter();
+  const toast = useToast();
   const [digits, setDigits] = useState<string[]>(Array(OTP_LEN).fill(""));
   const [isLoading, setIsLoading] = useState(false); const [cooldown, setCooldown] = useState(RESEND_DELAY);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -19,7 +20,7 @@ export function OtpVerifyForm({ email, onSuccess, onBack }: { email: string; onS
   function handlePaste(e:any){ e.preventDefault(); const pasted=e.clipboardData.getData("text").replace(/\D/g,"").slice(0,OTP_LEN); const n=Array(OTP_LEN).fill(""); pasted.split("").forEach((d:string,i:number)=> n[i]=d); setDigits(n); }
 
   async function handleVerify(){
-    const otp=digits.join(""); if(otp.length<OTP_LEN) return toast.error(`Entrez les ${OTP_LEN} chiffres`);
+    const otp=digits.join(""); if(otp.length<OTP_LEN) return toast.warning(`Entrez les ${OTP_LEN} chiffres`);
     setIsLoading(true);
     try{
       const temp_token = localStorage.getItem("rge_temp_token") || undefined;
@@ -29,7 +30,7 @@ export function OtpVerifyForm({ email, onSuccess, onBack }: { email: string; onS
         const data=res?.data||res;
         localStorage.removeItem("rge_temp_token");
         authService.setToken(data.token);
-        toast.success("Connexion réussie");
+        toast.success("Connexion réussie", "Bienvenue!");
         const role=data.user?.role;
         router.replace(role==="ADMIN"?"/admin":role==="REDACTEUR"?"/redacteur":"/animateur");
         return;
@@ -38,8 +39,9 @@ export function OtpVerifyForm({ email, onSuccess, onBack }: { email: string; onS
       const res:any = await authService.verifyForgotOtp(email, otp);
       const resetToken=res?.data?.token || res?.token || otp; // selon ton backend
       localStorage.setItem("rge_reset_token", resetToken);
+      toast.success("Code vérifié avec succès", "Réinitialisation");
       onSuccess(resetToken);
-    }catch(e:any){ toast.error(e?.errorMessage||"Code invalide"); }
+    }catch(e:any){ toast.error(e?.errorMessage||"Code invalide", "Erreur"); }
     finally{ setIsLoading(false); }
   }
 
@@ -49,8 +51,8 @@ export function OtpVerifyForm({ email, onSuccess, onBack }: { email: string; onS
     try{
       if(temp_token) await authService.resendOtp(temp_token);
       else await authService.forgot(email);
-      setCooldown(RESEND_DELAY); toast.success("Nouveau code envoyé");
-    }catch(e:any){ toast.error(e?.errorMessage); }
+      setCooldown(RESEND_DELAY); toast.success("Nouveau code envoyé", "Renvoi");
+    }catch(e:any){ toast.error(e?.errorMessage || "Erreur lors du renvoi", "Erreur"); }
   }
 
   return (

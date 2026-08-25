@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Search, LayoutGrid, List } from "lucide-react";
-import { toast } from "sonner";
 import axios from "@/core/axios";
+import { useToast } from "@/context/ToastContext";
 import PodcastCard from "@/components/cards/PodcastCard";
 import Paginate from "@/components/data/paginate";
 import PodcastForm from "@/components/form/podcast-form";
@@ -64,6 +64,7 @@ const STATUSES = [
 ];
 
 export default function PodcastsPage() {
+  const toast = useToast();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
@@ -133,11 +134,11 @@ export default function PodcastsPage() {
   const handlePublish = async (id: number) => {
     try {
       await axios.post(`/admin/podcasts/${id}/publish`);
-      toast.success("Podcast publié");
+      toast.success("Podcast publié", "Succès");
       fetchPodcasts();
       setShowDetails(false);
     } catch (err: any) {
-      toast.error(err?.errorMessage || "Erreur lors de la publication");
+      toast.error(err?.errorMessage || "Erreur lors de la publication", "Erreur");
     }
   };
 
@@ -145,11 +146,11 @@ export default function PodcastsPage() {
   const handleArchive = async (id: number) => {
     try {
       await axios.post(`/admin/podcasts/${id}/archive`);
-      toast.success("Podcast archivé");
+      toast.success("Podcast archivé", "Succès");
       fetchPodcasts();
       setShowDetails(false);
     } catch (err: any) {
-      toast.error(err?.errorMessage || "Erreur lors de l'archivage");
+      toast.error(err?.errorMessage || "Erreur lors de l'archivage", "Erreur");
     }
   };
 
@@ -157,52 +158,48 @@ export default function PodcastsPage() {
     fetchPodcasts();
   }, [page, search, category, status]);
 
-  // Créer/modifier
+  // Créer/modifier un podcast
+  // IMPORTANT: Si audio_url contient un fichier, le backend le met en temp/local
+  // puis dispatch UploadPodcastAudioJob qui l'upload vers R2 en arrière-plan
+  // via Redis queue worker. Le frontend reçoit audio_status='EN_COURS' et c'est normal.
   const handleSubmit = async (formData: FormData) => {
     setSubmitting(true);
     try {
-      // Convertir FormData en objet JSON
-      const data: any = {
-        programme_id: formData.get("programme_id"),
-        titre: formData.get("titre"),
-        description: formData.get("description"),
-        duree: formData.get("duree"),
-        is_premium: formData.get("is_premium") === "1",
-        statut: formData.get("statut"),
-      };
-
       if (editing) {
-        // Pour l'update, envoyer en JSON (pas multipart)
-        await axios.put(`/admin/podcasts/${editing.id}`, data);
-        toast.success("Podcast modifié");
+        // Pour l'update, envoyer en multipart si fichiers, sinon JSON
+        await axios.put(`/admin/podcasts/${editing.id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        toast.success("Podcast modifié", "Succès");
       } else {
-        // Pour la création, garder FormData pour les fichiers
+        // Pour la création, envoyer en multipart (fichiers + données)
         await axios.post("/admin/podcasts", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        toast.success("Podcast créé");
+        toast.success("Podcast créé", "Succès");
       }
       setShowForm(false);
       setEditing(null);
       fetchPodcasts();
     } catch (err: any) {
       console.error("Erreur submission:", err);
-      toast.error(err?.response?.data?.message || err?.errorMessage || "Erreur lors de la sauvegarde");
+      const errorMsg = err?.response?.data?.message || err?.errorMessage || "Erreur lors de la sauvegarde";
+      toast.error(errorMsg, "Erreur");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Supprimer
+  // Supprimer un podcast
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
       await axios.delete(`/admin/podcasts/${deleteTarget.id}`);
-      toast.success("Podcast supprimé");
+      toast.success("Podcast supprimé", "Suppression réussie");
       setDeleteTarget(null);
       fetchPodcasts();
     } catch (err: any) {
-      toast.error(err?.errorMessage || "Erreur lors de la suppression");
+      toast.error(err?.errorMessage || "Erreur lors de la suppression", "Erreur");
     }
   };
 
@@ -293,7 +290,7 @@ export default function PodcastsPage() {
                     setEditing(fullData);
                     setShowForm(true);
                   } catch (err) {
-                    toast.error("Erreur lors du chargement du podcast");
+                    toast.error("Erreur lors du chargement du podcast", "Erreur");
                     console.error(err);
                   }
                 }}

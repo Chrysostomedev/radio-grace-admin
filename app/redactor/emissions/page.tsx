@@ -92,7 +92,7 @@ export default function EmissionsPage() {
 
   return (
     <>
-      <ReusableForm isOpen={showForm} onClose={() => setShowForm(false)} title="Nouvelle émission RGE" fields={FIELDS} onSubmit={async () => setShowForm(false)} submitLabel="Créer l'émission" />
+      <ReusableForm isOpen={showForm} onClose={() => setShowForm(false)} title="Nouvelle émission RGE" subtitle="Créez une nouvelle émission de radio" fields={FIELDS} onSubmit={async () => setShowForm(false)} submitLabel="Créer l'émission" />
       <ConfirmModal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={async () => setDeleteTarget(null)} title="Supprimer l'émission" message={`Supprimer « ${deleteTarget?.title} »?`} confirmLabel="Supprimer" />
 
       <div className="space-y-5">

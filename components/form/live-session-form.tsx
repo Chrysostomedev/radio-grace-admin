@@ -7,6 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
+// Résolution de l'incompatibilité avec Omit pour la propriété "type"
+export type ExtendedLiveSessionFormData = Omit<Partial<CreateLiveSessionDTO>, 'type'> & {
+  titre?: string;
+  description?: string;
+  debut_prevue?: string;
+  programme_id?: number | null;
+  animateur_id?: number | null;
+  type?: CreateLiveSessionDTO['type'] | string;
+};
+
 interface LiveSessionFormProps {
   onSubmit: (data: CreateLiveSessionDTO) => Promise<void>;
   initialData?: CreateLiveSessionDTO;
@@ -23,43 +33,48 @@ export function LiveSessionForm({
   loading = false,
   onCancel,
 }: LiveSessionFormProps) {
-  const [formData, setFormData] = useState<CreateLiveSessionDTO>(
+  const [formData, setFormData] = useState<ExtendedLiveSessionFormData>(
     initialData || {
       titre: '',
-      description: '',
+      type: 'AUDIO',
       programme_id: undefined,
-      animateur_id: undefined,
-      debut_prevue: '',
     }
   );
 
   const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    
+    // Traitement des types pour conserver la conformité TypeScript
+    let parsedValue: string | number | null | undefined = value || undefined;
+    if (type === 'number') {
+      parsedValue = value === '' ? undefined : Number(value);
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value || undefined,
+      [name]: parsedValue,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.titre.trim()) {
+    if (!formData.titre || !formData.titre.trim()) {
       toast.error('Le titre est obligatoire');
       return;
     }
 
     try {
       setSubmitting(true);
-      await onSubmit(formData);
+      await onSubmit(formData as CreateLiveSessionDTO);
       setFormData({
         titre: '',
-        description: '',
+        type: 'AUDIO',
         programme_id: undefined,
-        animateur_id: undefined,
-        debut_prevue: '',
       });
     } catch (error) {
       console.error('Erreur submission:', error);
@@ -67,6 +82,8 @@ export function LiveSessionForm({
       setSubmitting(false);
     }
   };
+
+  const isTitleValid = Boolean(formData.titre && formData.titre.trim().length > 0);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,7 +96,7 @@ export function LiveSessionForm({
           type="text"
           name="titre"
           placeholder="ex: Direct Louange Matinale"
-          value={formData.titre}
+          value={formData.titre || ''}
           onChange={handleChange}
           disabled={loading || submitting}
           className="w-full"
@@ -125,7 +142,7 @@ export function LiveSessionForm({
           type="number"
           name="programme_id"
           placeholder="ID du programme (optionnel)"
-          value={formData.programme_id || ''}
+          value={formData.programme_id ?? ''}
           onChange={handleChange}
           disabled={loading || submitting}
           className="w-full"
@@ -141,7 +158,7 @@ export function LiveSessionForm({
           type="number"
           name="animateur_id"
           placeholder="ID de l'animateur (optionnel)"
-          value={formData.animateur_id || ''}
+          value={formData.animateur_id ?? ''}
           onChange={handleChange}
           disabled={loading || submitting}
           className="w-full"
@@ -152,7 +169,7 @@ export function LiveSessionForm({
       <div className="flex gap-3 pt-4">
         <Button
           type="submit"
-          disabled={loading || submitting || !formData.titre.trim()}
+          disabled={loading || submitting || !isTitleValid}
           className="flex-1"
         >
           {submitting ? '⏳ Création...' : '🎬 Créer Session'}

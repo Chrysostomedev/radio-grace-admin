@@ -20,8 +20,11 @@ export function useIntentions() {
 
   const markAsPrie = async (id: number, s: string = "PRIE") => {
     await intentionService.updateStatut(id, s);
+  };
+
+  const refresh = async () => {
     await fetch();
   };
 
-  return { intentions, loading, statut, setStatut, markAsPrie, refresh: fetch };
+  return { intentions, loading, statut, setStatut, markAsPrie, refresh };
 }

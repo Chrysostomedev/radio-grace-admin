@@ -1,77 +1,156 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Calendar, ChevronRight, Target } from "lucide-react";
-import { formatDateFR } from "@/lib/format.data";
 
-interface Project {
-    id: number;
-    title: string;
-    status: { name: string; color: string };
-    role: string;
-    progress: number;
-    total_tasks: number;
-    completed_tasks: number;
-    my_tasks: number;
-    my_completed: number;
-    due_date: string;
+// ── Types locaux ──────────────────────────────────────────────────────────────
+
+export interface Project {
+  id: number;
+  name: string;
+  code?: string;
+  status?: string;
+  color?: string;
+  startDate?: string;
+  endDate?: string;
+  progress?: number;
 }
 
-export default function PersonnelProjectsGrid({ projects }: { projects: Project[] }) {
-    const router = useRouter();
+interface PersonnelProjectsGridProps {
+  projects?: Project[];
+  onProjectClick?: (id: number) => void;
+}
 
+// ── Formateur de date local (statique) ────────────────────────────────────────
+
+function formatDateFR(dateString?: string): string {
+  if (!dateString) return "Non définie";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "Non définie";
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// ── Données factices (statiques) ──────────────────────────────────────────────
+
+const STATIC_PROJECTS: Project[] = [
+  {
+    id: 1,
+    name: "Refonte du site Radio Grace",
+    code: "RGA-2026",
+    status: "En cours",
+    color: "#f97316",
+    startDate: "2026-01-15",
+    endDate: "2026-06-30",
+    progress: 65,
+  },
+  {
+    id: 2,
+    name: "Système de notification en temps réel",
+    code: "NOTIF-02",
+    status: "En révision",
+    color: "#6366f1",
+    startDate: "2026-02-01",
+    endDate: "2026-04-15",
+    progress: 85,
+  },
+  {
+    id: 3,
+    name: "Migration de la base de données",
+    code: "DB-MIG",
+    status: "Terminé",
+    color: "#10b981",
+    startDate: "2025-11-01",
+    endDate: "2026-01-10",
+    progress: 100,
+  },
+];
+
+// ── Composant Principal ───────────────────────────────────────────────────────
+
+export default function PersonnelProjectsGrid({
+  projects = STATIC_PROJECTS,
+  onProjectClick,
+}: PersonnelProjectsGridProps) {
+  if (!projects || projects.length === 0) {
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {projects.map(p => (
-                <button
-                    key={p.id}
-                    onClick={() => router.push(`/admin/projets/${p.id}`)}
-                    className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-left hover:border-orange-200 hover:shadow-md transition group"
-                >
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[14px] font-black text-slate-900 truncate group-hover:text-[#f97316] transition">
-                                {p.title}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span
-                                    className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-black"
-                                    style={{ backgroundColor: `${p.status.color}1A`, color: p.status.color }}
-                                >
-                                    {p.status.name}
-                                </span>
-                                <span className="text-[11px] font-bold text-orange-500">{p.role}</span>
-                            </div>
-                        </div>
-                        <ChevronRight size={18} className="text-slate-300 group-hover:text-[#f97316] transition shrink-0" />
-                    </div>
-
-                    <div className="space-y-3">
-                        <div>
-                            <div className="flex items-center justify-between text-[11px] mb-1.5">
-                                <span className="font-bold text-slate-500">Avancement global</span>
-                                <span className="font-black text-slate-700">{p.progress}%</span>
-                            </div>
-                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full" style={{ width: `${p.progress}%` }} />
-                            </div>
-                            <p className="text-[10px] text-slate-400 mt-1">{p.completed_tasks}/{p.total_tasks} tâches</p>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                            <div className="flex items-center gap-1.5 text-[12px]">
-                                <Target size={14} className="text-emerald-500" />
-                                <span className="font-bold text-slate-700">{p.my_completed}/{p.my_tasks}</span>
-                                <span className="text-slate-400">mes tâches</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                                <Calendar size={13} />
-                                {formatDateFR(p.due_date)}
-                            </div>
-                        </div>
-                    </div>
-                </button>
-            ))}
-        </div>
+      <div className="bg-white rounded-3xl p-8 text-center border border-slate-100">
+        <Target size={32} className="mx-auto text-slate-300 mb-2" />
+        <p className="text-sm font-bold text-slate-600">Aucun projet assigné</p>
+        <p className="text-xs text-slate-400 mt-1">
+          Aucun projet ne semble être attribué à ce membre pour le moment.
+        </p>
+      </div>
     );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {projects.map((project) => (
+        <div
+          key={project.id}
+          onClick={() => onProjectClick?.(project.id)}
+          className="group bg-white rounded-3xl p-6 border border-slate-100 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+        >
+          <div>
+            {/* Header / Badges */}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              {project.code && (
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                  {project.code}
+                </span>
+              )}
+              {project.status && (
+                <span
+                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: project.color ? `${project.color}15` : "#f9731615",
+                    color: project.color || "#f97316",
+                  }}
+                >
+                  {project.status}
+                </span>
+              )}
+            </div>
+
+            {/* Titre */}
+            <h3 className="text-base font-bold text-slate-900 group-hover:text-orange-500 transition-colors line-clamp-2">
+              {project.name}
+            </h3>
+
+            {/* Dates */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-3 font-medium">
+              <Calendar size={13} className="text-slate-300" />
+              <span>
+                {formatDateFR(project.startDate)} - {formatDateFR(project.endDate)}
+              </span>
+            </div>
+          </div>
+
+          {/* Progression */}
+          <div className="mt-5 pt-4 border-t border-slate-50">
+            <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+              <span className="text-slate-400">Progression</span>
+              <span className="text-slate-700">{project.progress ?? 0}%</span>
+            </div>
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${project.progress ?? 0}%`,
+                  backgroundColor: project.color || "#f97316",
+                }}
+              />
+            </div>
+
+            <div className="flex items-center justify-end text-xs font-bold text-orange-500 mt-3 group-hover:translate-x-1 transition-transform">
+              Voir le projet <ChevronRight size={14} className="ml-0.5" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }

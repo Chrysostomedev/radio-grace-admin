@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, AlertTriangle, X, Newspaper, RadioTower, Radio,
   Music2Icon,
   HandCoins,
+  User2,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -53,6 +54,10 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   {
     label: "Actualités", icon: Newspaper, href: "/admin/actualites",
   },
+   {
+    label: "Grille des programmes", icon: ListMusic, href: "/admin/programmes/grille",
+    
+  },
   {
     label: "Émissions", icon: ListMusic, href: "/admin/emissions",
     // submenu: [
@@ -64,8 +69,9 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Événements", icon: CalendarDays, href: "/admin/evenements" },
   { label: "Boutique", icon: ShoppingBag, href: "/admin/boutique" },
   { label: "Intentions de prière", icon: HeartHandshake, href: "/admin/intentions" },
-  { label: "Direct / Player", icon: RadioTower, href: "/admin/direct" },
+  { label: "Direct ", icon: RadioTower, href: "/admin/direct" },
   { label: "Dons", icon: HandCoins, href: "/admin/dons" },
+  { label: "Animateurs", icon: User2, href: "/admin/animateurs" },
   { label: "Utilisateurs", icon: Users, href: "/admin/roles" },
 ];
 

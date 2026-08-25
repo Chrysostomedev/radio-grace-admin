@@ -6,6 +6,7 @@ import type { LiveSession, LiveSessionPayload } from '@/types/admin';
  * Export du type pour utilisation
  */
 export type { LiveSession };
+export type CreateLiveSessionDTO = LiveSessionPayload;
 
 /**
  * Données statiques de fallback au cas où le backend ne soit pas disponible
@@ -89,7 +90,7 @@ export const liveStreamService = {
         titre: data.titre,
         type: data.type,
         programme_id: data.programme_id,
-        animateur_id: data.animateur_id,
+        animateur_id: (data as any).animateur_id,
       };
       const response = await axios.post('/admin/live-sessions', payload);
       return response.data.data;

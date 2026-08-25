@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers/query-provider";
+import { ToastProvider } from "@/context/ToastContext";
 import "./globals.css";
 import { NotificationProvider } from "@/app/components/NotificationProvider";
 
@@ -31,9 +32,11 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>
-          <NotificationProvider>
-            {children}
-          </NotificationProvider>
+          <ToastProvider>
+            <NotificationProvider>
+              {children}
+            </NotificationProvider>
+          </ToastProvider>
         </Providers>
       </body>
     </html>

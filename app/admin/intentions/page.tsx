@@ -3,12 +3,12 @@ import { useState } from "react";
 import { useIntentions } from "@/hooks/admin/useIntentions";
 import StatsCard from "@/components/cards/StatsCard";
 import { Heart, Check, Clock, X, Eye } from "lucide-react";
-import { useRouter } from "next/navigation";
+import IntentionDetailsModal from "@/components/modals/IntentionDetailsModal";
 
 export default function IntentionsPage() {
-  const router = useRouter();
-  const { intentions, loading, statut, setStatut, markAsPrie } = useIntentions();
-  const [selected, setSelected] = useState<any>(null);
+  const { intentions, loading, statut, setStatut, markAsPrie, refresh } = useIntentions();
+  const [selectedIntention, setSelectedIntention] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const stats = {
     total: intentions.length,
@@ -53,9 +53,12 @@ export default function IntentionsPage() {
                   <p className="text- text-[#163A2C]/40">{it.is_anonyme? "Anonyme" : it.telephone || "—"} {it.is_public? "• Public" : "• Privé"}</p>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={()=>router.push(`/admin/intentions/${it.id}`)} className="p-2 bg-[#163A2C]/5 rounded-xl hover:bg-[#163A2C]/10"><Eye size={14}/></button>
+                  <button onClick={() => {
+                    setSelectedIntention(it);
+                    setIsModalOpen(true);
+                  }} className="p-2 bg-[#163A2C]/5 rounded-xl hover:bg-[#163A2C]/10 transition"><Eye size={14}/></button>
                   {it.statut!== "PRIE" && (
-                    <button onClick={()=>markAsPrie(it.id, "PRIE")} className="p-2 bg-[#1E9D55] text-white rounded-xl hover:bg-[#1E9D55]/90" title="Marquer priée"><Check size={14}/></button>
+                    <button onClick={()=>markAsPrie(it.id, "PRIE")} className="p-2 bg-[#1E9D55] text-white rounded-xl hover:bg-[#1E9D55]/90 transition" title="Marquer priée"><Check size={14}/></button>
                   )}
                 </div>
               </div>
@@ -67,6 +70,21 @@ export default function IntentionsPage() {
       {intentions.length===0 &&!loading && (
         <div className="py-16 text-center bg-white rounded-2xl border border-dashed">Aucune intention {statut!=="all"? `en ${statut}` : ""}</div>
       )}
+
+      {/* Modal détails */}
+      <IntentionDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        intention={selectedIntention}
+        onMarkAsPrie={async (id) => {
+          await markAsPrie(id, "PRIE");
+          await refresh();
+        }}
+        onMarkAsClosed={async (id) => {
+          await markAsPrie(id, "CLOTURE");
+          await refresh();
+        }}
+      />
     </div>
   );
 }

@@ -3,28 +3,33 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Key, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { authService } from "@/services/auth.service";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
 
 const schema = z.object({ new_password: z.string().min(8), confirm: z.string().min(1) }).refine(d=>d.new_password===d.confirm,{message:"Ne correspond pas", path:["confirm"]});
 type Values = z.infer<typeof schema>;
 
 export function ResetPasswordForm({ email, resetToken }: { email: string; resetToken: string; }) {
-  const router=useRouter(); const [isLoading,setIsLoading]=useState(false); const [showNew,setShowNew]=useState(false); const [showConf,setShowConf]=useState(false);
+  const router=useRouter();
+  const toast = useToast();
+  const [isLoading,setIsLoading]=useState(false);
+  const [showNew,setShowNew]=useState(false);
+  const [showConf,setShowConf]=useState(false);
   const form=useForm<Values>({resolver:zodResolver(schema), defaultValues:{new_password:"",confirm:""}});
   async function onSubmit(data:Values){
     setIsLoading(true);
     try{
       await authService.reset(email, resetToken, data.new_password, data.confirm);
-      localStorage.removeItem("rge_reset_token"); localStorage.removeItem("rge_temp_token");
-      toast.success("Mot de passe réinitialisé, connectez-vous");
+      localStorage.removeItem("rge_reset_token"); 
+      localStorage.removeItem("rge_temp_token");
+      toast.success("Mot de passe réinitialisé, connectez-vous", "Succès!");
       router.replace("/login");
-    }catch(e:any){ toast.error(e?.errorMessage||"Erreur"); }
+    }catch(e:any){ toast.error(e?.errorMessage||"Erreur lors de la réinitialisation", "Erreur"); }
     finally{ setIsLoading(false); }
   }
   return (

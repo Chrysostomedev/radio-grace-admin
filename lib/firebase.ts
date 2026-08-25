@@ -1,32 +1,42 @@
 // lib/firebase.ts - Configuration Firebase
-import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getMessaging, onMessage, getToken, Messaging } from 'firebase/messaging';
+import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
+import { getMessaging, onMessage, getToken, Messaging, isSupported } from 'firebase/messaging';
 import { firebaseConfig, firebaseVapidKey, isFirebaseConfigured } from '@/config/firebase-config';
 
-// Vérifier que Firebase est configuré
 if (!isFirebaseConfigured()) {
   console.error('❌ Firebase configuration incomplete - notifications will not work');
 }
 
-// Initialiser Firebase
+// Initialisation sécurisée pour SSR
 let app: FirebaseApp | null = null;
 let messaging: Messaging | null = null;
 
-try {
-  app = initializeApp(firebaseConfig);
-  messaging = getMessaging(app);
-  console.log('✅ Firebase initialized successfully');
-} catch (error) {
-  console.error('❌ Firebase initialization error:', error);
+if (typeof window !== 'undefined') {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    
+    // Initialisation asynchrone / vérification du support du navigateur
+    isSupported().then((supported) => {
+      if (supported && app) {
+        messaging = getMessaging(app);
+        console.log('✅ Firebase initialized successfully');
+      }
+    });
+  } catch (error) {
+    console.error('❌ Firebase initialization error:', error);
+  }
 }
 
 /**
  * Obtenir le FCM Token
  */
 export const getFCMToken = async (): Promise<string | null> => {
+  if (typeof window === 'undefined') return null;
+
   try {
-    if (!messaging) {
-      console.warn('⚠️ Firebase Messaging not initialized');
+    const supported = await isSupported();
+    if (!supported || !messaging) {
+      console.warn('⚠️ Firebase Messaging not supported or initialized');
       return null;
     }
 
@@ -35,19 +45,16 @@ export const getFCMToken = async (): Promise<string | null> => {
       return null;
     }
 
-    // Demander permission de notification
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       console.warn('⚠️ Notification permission denied');
       return null;
     }
 
-    // Obtenir le token
     const token = await getToken(messaging, {
       vapidKey: firebaseVapidKey,
     });
 
-    // Log only token prefix for security
     if (token) {
       console.log('✅ FCM Token obtained:', `${token.substring(0, 20)}...`);
     }
@@ -62,12 +69,11 @@ export const getFCMToken = async (): Promise<string | null> => {
  * Listener pour messages en foreground
  */
 export const onForegroundMessage = (callback: (payload: any) => void) => {
-  if (!messaging) return;
+  if (typeof window === 'undefined' || !messaging) return;
 
   onMessage(messaging, (payload) => {
     console.log('📨 Message received in foreground:', payload);
 
-    // Afficher notification personnalisée
     if (payload.notification) {
       const { title, body, image } = payload.notification;
       const options: NotificationOptions = {
@@ -88,12 +94,11 @@ export const onForegroundMessage = (callback: (payload: any) => void) => {
  * Traiter le click sur notification
  */
 export const handleNotificationClick = (callback: (data: any) => void) => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
-  // ServiceWorker envoie message au frontend
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'NOTIFICATION_CLICK') {
-      console.log('👆 Notification clicked:', event.data.notification);
+      console.log(' Notification clicked:', event.data.notification);
       callback(event.data.notification);
     }
   });

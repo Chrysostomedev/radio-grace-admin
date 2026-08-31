@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
-import { Copy, Check, Radio, Square, Settings } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useMemo } from "react";
+import { Copy, Check, Radio, Square, Settings, Loader2 } from "lucide-react";
+import { useProgrammes } from "@/hooks/admin/useProgrammes";
 import type { LiveSession, LiveSessionPayload } from "@/types/admin";
 
 interface LiveControlsProps {
@@ -13,13 +13,11 @@ interface LiveControlsProps {
 
 function CopyField({ label, value }: { label: string; value: string }) {
     const [copied, setCopied] = useState(false);
-
     const copy = async () => {
         await navigator.clipboard.writeText(value);
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
     };
-
     return (
         <div>
             <p className="text-[11px] font-bold uppercase tracking-wide text-[#163A2C]/40 mb-1">{label}</p>
@@ -35,20 +33,48 @@ function CopyField({ label, value }: { label: string; value: string }) {
 }
 
 export default function LiveControls({ session, onCreate, onForceStop, saving }: LiveControlsProps) {
-    const [titre, setTitre] = useState("");
+    const { programmes, loading: loadingProgrammes } = useProgrammes();
+    const [programmeId, setProgrammeId] = useState<number | "">("");
     const [type, setType] = useState<"AUDIO" | "VIDEO">("VIDEO");
 
-    // ── Aucune session en cours : formulaire de création ─────────────────────
+    // Même filtre que la grille : uniquement les vraies émissions
+    const validProgrammes = useMemo(
+        () => programmes?.filter((p) =>
+            p.categorie && ["ACCLAMEZ", "PRIERE", "JEUNESSE", "ACTUALITE", "MUSIQUE"].includes(p.categorie)
+        ) ?? [],
+        [programmes]
+    );
+
+    // ── Aucune session : formulaire avec sélection du programme ─────────────
     if (!session) {
         return (
             <div className="bg-white rounded-2xl border border-[#163A2C]/10 p-5 space-y-4">
                 <h3 className="font-black text-[#163A2C] text-sm">Nouvelle session</h3>
-                <input
-                    value={titre}
-                    onChange={(e) => setTitre(e.target.value)}
-                    placeholder="Ex: Acclamez le Seigneur - Live Daoa"
-                    className="w-full px-3 py-2.5 rounded-xl border border-[#163A2C]/10 text-sm focus:outline-none focus:border-[#F0A93E]"
-                />
+
+                {/* Sélection du programme (remplace la saisie libre) */}
+                <div>
+                    <label htmlFor="live-programme" className="text-[11px] font-bold uppercase tracking-wide text-[#163A2C]/40 mb-1 block">
+                        Programme à diffuser
+                    </label>
+                    <select
+                        id="live-programme"
+                        value={programmeId}
+                        onChange={(e) => setProgrammeId(e.target.value ? Number(e.target.value) : "")}
+                        disabled={loadingProgrammes}
+                        className="w-full px-3 py-2.5 rounded-xl border border-[#163A2C]/10 text-sm bg-white text-[#163A2C] focus:outline-none focus:border-[#F0A93E] disabled:opacity-50"
+                    >
+                        <option value="">
+                            {loadingProgrammes ? "Chargement des émissions..." : "— Sélectionner une émission —"}
+                        </option>
+                        {validProgrammes.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.titre} {p.categorie ? `· ${p.categorie}` : ""}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Type de flux — inchangé */}
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={() => setType("VIDEO")}
@@ -63,18 +89,20 @@ export default function LiveControls({ session, onCreate, onForceStop, saving }:
                         Audio seul
                     </button>
                 </div>
+
                 <button
-                    disabled={!titre.trim() || saving}
-                    onClick={() => onCreate({ titre, type })}
-                    className="w-full h-12 rounded-xl bg-[#163A2C] text-white font-black text-sm uppercase tracking-wide disabled:opacity-40 hover:bg-[#0E241C] transition"
+                    disabled={!programmeId || saving}
+                    onClick={() => onCreate({ programme_id: programmeId as number, type })}
+                    className="w-full h-12 rounded-xl bg-[#163A2C] text-white font-black text-sm uppercase tracking-wide disabled:opacity-40 hover:bg-[#0E241C] transition flex items-center justify-center gap-2"
                 >
+                    {saving && <Loader2 size={16} className="animate-spin" />}
                     {saving ? "Création..." : "Créer la session"}
                 </button>
             </div>
         );
     }
 
-    // ── Session créée mais OBS pas encore connecté : identifiants à copier ──
+    // ── Session créée mais OBS pas connecté : identifiants à copier ─────────
     if (!session.is_live) {
         return (
             <div className="bg-white rounded-2xl border border-[#163A2C]/10 p-5 space-y-4">
@@ -83,8 +111,9 @@ export default function LiveControls({ session, onCreate, onForceStop, saving }:
                     <span className="text-[10px] font-black uppercase px-2 py-1 rounded-full bg-[#FBF6EA] text-[#163A2C]/60">En attente</span>
                 </div>
                 <p className="text-xs text-[#163A2C]/50 leading-relaxed">
+                    Session : <strong className="text-[#163A2C]">{session.programme?.titre ?? session.titre}</strong>.
                     Collez ces valeurs dans OBS → Paramètres → Flux → Service <strong>Personnalisé</strong>,
-                    puis cliquez « Démarrer la diffusion ». Le statut ci-dessous passera automatiquement en direct.
+                    puis cliquez « Démarrer la diffusion ».
                 </p>
                 {session.obs && (
                     <div className="space-y-3">
@@ -96,7 +125,7 @@ export default function LiveControls({ session, onCreate, onForceStop, saving }:
         );
     }
 
-    // ── En direct : statut + coupure d'urgence uniquement ────────────────────
+    // ── En direct : statut + coupure d'urgence ──────────────────────────────
     return (
         <div className="bg-white rounded-2xl border border-[#163A2C]/10 p-5 space-y-5">
             <div className="flex items-center justify-between">
@@ -106,7 +135,9 @@ export default function LiveControls({ session, onCreate, onForceStop, saving }:
 
             <div className="flex items-center gap-2 text-sm text-[#163A2C]/70">
                 <Radio size={16} className="text-[#F0A93E]" />
-                Diffusion pilotée depuis OBS — aucune action requise ici.
+                <span>
+                    Diffusion : <strong className="text-[#163A2C]">{session.programme?.titre ?? session.titre}</strong>
+                </span>
             </div>
 
             <button

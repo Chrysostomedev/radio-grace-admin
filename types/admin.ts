@@ -110,19 +110,34 @@ export interface ProgrammePayload {
 /* ============================================================
  * PODCASTS
  * ============================================================ */
+
+/** Statut de modération d'un podcast (back-office) */
+export type PodcastStatut = "published" | "draft" | "archived";
+
 export interface Podcast {
     id: number;
     titre: string;
     description: string | null;
     audio_url: string | null;
+    /** État de traitement audio côté serveur (upload/transcodage) */
+    audio_status?: string | null;
     video_url: string | null;
+    /** Provider si vidéo externe : "youtube", "facebook", "file"... */
+    video_provider?: string | null;
     image: string | null;
     duree: number | null;
-    duree_formatee: string;
+    duree_formatee?: string;
     is_premium: boolean;
     vues: number;
     programme: Programme | null;
+    /** Statut de modération — optionnel car peut ne pas être sérialisé partout */
+    status?: PodcastStatut;
+    /** Alias API éventuel (compat) */
+    statut?: string;
     commentaires_count?: number;
+    programme_id?: number | string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface PodcastPayload {
@@ -134,6 +149,23 @@ export interface PodcastPayload {
     image?: File;
     duree?: number;
     is_premium?: boolean;
+}
+
+/** Réponse paginée générique pour les endpoints admin */
+export interface PaginatedResponse<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    total: number;
+}
+
+const PUBLISHED_STATUSES: readonly PodcastStatut[] = ["published", "draft", "archived"] as const;
+
+/** Normalise un statut brut d'API vers PodcastStatut (undefined si inconnu) */
+export function normalizePodcastStatut(raw?: string | null): PodcastStatut | undefined {
+    if (!raw) return undefined;
+    const value = raw.toLowerCase() as PodcastStatut;
+    return PUBLISHED_STATUSES.includes(value) ? value : undefined;
 }
 
 /* ============================================================
@@ -326,9 +358,9 @@ export interface LiveSession {
 }
 
 export interface LiveSessionPayload {
-    titre: string;
-    programme_id?: number | null;
-    type: LiveType;
+titre?: string;            // devient optionnel — dérivé du programme côté backend
+    programme_id?: number;    
+    type: "AUDIO" | "VIDEO";
 }
 
 export type PubliciteFormat = "PLAYER" | "BANNER" | "INTERSTITIEL" | "PARTENAIRE";

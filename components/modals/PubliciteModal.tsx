@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Image as ImageIcon, Upload, Loader2, Link2 } from "lucide-react";
+import { X, Image as ImageIcon, Upload, Loader2, Link2, CalendarDays } from "lucide-react";
 import { Publicite } from "@/types/publicite.types";
 
 interface PubliciteModalProps {
@@ -22,6 +22,8 @@ export function PubliciteModal({
   const [titre, setTitre] = useState("");
   const [position, setPosition] = useState("BANNER");
   const [lien, setLien] = useState("");
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -30,12 +32,16 @@ export function PubliciteModal({
       setTitre(publicite.titre);
       setPosition(publicite.position);
       setLien(publicite.lien || "");
+      setDateDebut(publicite.date_debut?.slice(0, 10) || "");
+      setDateFin(publicite.date_fin?.slice(0, 10) || "");
       const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://127.0.0.1:8000';
-      setImagePreview(publicite.image ? `${baseUrl}/storage/${publicite.image}` : null);
+      setImagePreview(publicite.image ? `baseUrl/storage/{baseUrl}/storage/baseUrl/storage/{publicite.image}` : null);
     } else {
       setTitre("");
       setPosition("BANNER");
       setLien("");
+      setDateDebut("");
+      setDateFin("");
       setImageFile(null);
       setImagePreview(null);
     }
@@ -55,6 +61,8 @@ export function PubliciteModal({
     formData.append("titre", titre);
     formData.append("position", position);
     if (lien) formData.append("lien", lien);
+if (dateDebut) formData.append("date_debut", dateDebut);   
+ if (dateFin) formData.append("date_fin", dateFin);
     if (imageFile) formData.append("image", imageFile);
 
     onSubmit(formData);
@@ -69,7 +77,7 @@ export function PubliciteModal({
         {/* Header */}
         <div className="px-6 py-5 border-b border-[#163A2C]/10 flex items-center justify-between bg-[#FBF6EA]/50">
           <h2 className="text-xl font-black text-[#163A2C]">
-            {publicite ? "Modifier" : "Ajouter"} un élément
+            {publicite ? "Modifier" : "Ajouter"} unément
           </h2>
           <button
             onClick={onClose}
@@ -107,6 +115,38 @@ export function PubliciteModal({
               <option value="INTERSTITIEL">Interstitiel</option>
               <option value="PARTENAIRE">Partenaire</option>
             </select>
+          </div>
+
+          {/* ✅ Dates de diffusion */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-[#163A2C] mb-1.5 flex items-center gap-2">
+                <CalendarDays size={16} className="text-[#163A2C]/50" />
+                Date de début
+              </label>
+              <input
+                type="date"
+                value={dateDebut}
+                onChange={(e) => setDateDebut(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F0A93E] focus:border-transparent text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-[#163A2C] mb-1.5 flex items-center gap-2">
+                <CalendarDays size={16} className="text-[#163A2C]/50" />
+                Date de fin
+              </label>
+              <input
+                type="date"
+                value={dateFin}
+                min={dateDebut || undefined}
+                onChange={(e) => setDateFin(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F0A93E] focus:border-transparent text-sm"
+              />
+            </div>
+            <p className="col-span-2 text-xs text-[#163A2C]/50 -mt-2">
+              Optionnel : si aucune date n'est définie, l'élément sera affiché en permanence.
+            </p>
           </div>
 
           {/* Lien */}

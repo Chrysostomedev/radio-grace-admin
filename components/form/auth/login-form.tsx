@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { authService } from "@/services/auth.service";
+import { ROUTES } from '@/lib/routes';
 import { useToast } from "@/context/ToastContext";
 
 const BRAND_GRACE = "bg-[#F0A93E] hover:bg-[#E0972E] text-[#163A2C]";
@@ -43,12 +44,12 @@ export function LoginForm({ forgotPasswordHref = "/login/password" }: { forgotPa
       authService.setToken(data.token);
       toast.success(`Bienvenue, ${data.user?.prenom || data.user?.nom_complet || values.email}`, "Connexion réussie");
 
-      // redirection par rôle
+      // redirection par rôle (utiliser constantes centralisées)
       const role = data.user?.role;
-      if (role === "ADMIN") router.replace("/admin");
+      if (role === "ADMIN") router.replace(ROUTES.ADMIN_DASHBOARD);
       else if (role === "REDACTEUR") router.replace("/redacteur");
       else if (role === "ANIMATEUR") router.replace("/animateur");
-      else router.replace("/admin");
+      else router.replace(ROUTES.ADMIN_DASHBOARD);
 
     } catch (e: any) {
       toast.error(e?.errorMessage || e?.message || "Identifiants invalides", "Erreur de connexion");

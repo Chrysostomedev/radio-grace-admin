@@ -34,8 +34,8 @@ export default function EmissionDetailPage() {
     category: p.categorie,
     jour: p.grille?.[0]?.jour || "TOUS",
     horaire: p.grille?.[0]? `${p.grille[0].heure_debut} - ${p.grille[0].heure_fin}` : "-",
-    animateur: p.animateur?.nom_complet || p.animateur?.nom || "Non assigné",
-    image: p.image || "/images/emission (3).jpg",
+    animateur: p.animateur?.nom_scene || p.animateur?.name || "Non assigné",
+    image: p.image || p.photo || "/img/default-emission.jpg",
     description: p.description || "Aucune description",
     stats: p.stats || { auditeurs_total: p.vues || 0, auditeurs_pic: Math.round((p.vues || 0) * 0.38), duree_moy_min: 42, temps_total_heures: Math.round((p.vues || 0) * 0.042), rediffusions: p.grille?.filter((g: any) => g.is_rediffusion).length || 0, taux_fidelite: 68 },
     audience_par_tranche: p.grille?.length? p.grille.slice(0, 3).map((g: any, i: number) => ({ label: `${g.heure_debut}-${g.heure_fin}`, done: 800 + i * 100, total: 1240, color: ["#F0A93E", "#1E9D55", "#163A2C"][i % 3] })) : [
@@ -44,11 +44,11 @@ export default function EmissionDetailPage() {
       { label: "17h-17h30", done: 980, total: 1240, color: "#163A2C" },
     ],
     repartition_source: [
-      { label: "FM 102.3", done: Math.round((p.vues || 0) * 0.6), total: p.vues || 100, color: "#163A2C" },
+      // { label: "FM 102.3", done: Math.round((p.vues || 0) * 0.6), total: p.vues || 100, color: "#163A2C" },
       { label: "Streaming Web", done: Math.round((p.vues || 0) * 0.25), total: p.vues || 100, color: "#F0A93E" },
       { label: "App Mobile", done: Math.round((p.vues || 0) * 0.15), total: p.vues || 100, color: "#1E9D55" },
     ],
-    intervenants: p.animateur? [{ id: p.animateur.id, name: p.animateur.nom_complet, subText: `Animateur • ${p.categorie}`, href: `/admin/animateurs/${p.animateur.id}` }] : [],
+intervenants: p.animateur? [{ id: p.animateur.id, name: p.animateur.nom_scene || p.animateur.name, subText: `Animateur • ${p.categorie}`, href: `/admin/animateurs/${p.animateur.id}` }] : [],
   };
 
   return (

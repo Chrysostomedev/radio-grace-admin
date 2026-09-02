@@ -1,7 +1,6 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect, useState, useRef } from "react";
 
 type Props = {
@@ -11,7 +10,6 @@ type Props = {
 };
 
 export default function SearchInput({ onSearch, placeholder, defaultValue = "" }: Props) {
-  const { t } = useLanguage();
   const [value, setValue] = useState(defaultValue);
   const onSearchRef = useRef(onSearch);
   const isInitialMount = useRef(true);

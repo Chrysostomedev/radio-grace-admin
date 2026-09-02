@@ -12,14 +12,14 @@ export function useIntentions() {
     setLoading(true);
     try {
       const res = await intentionService.getAll({ statut: statut!== "all"? statut : undefined, page, per_page: 20 });
-      setIntentions(res.data.data || []);
+      setIntentions(res.data || []);
     } finally { setLoading(false); }
   }, [statut, page]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const markAsPrie = async (id: number, s: string = "PRIE") => {
-    await intentionService.updateStatut(id, s);
+  const markAsPrie = async (id: number, statut: string = "PAYEE") => {
+    await intentionService.update(id, { statut_paiement: statut as any });
   };
 
   const refresh = async () => {

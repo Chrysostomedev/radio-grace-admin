@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import SearchInput from "@/components/data/SearchInput";
 import Paginate from "@/components/data/paginate";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 
 export type ColumnConfig<T> = {
@@ -110,7 +109,6 @@ export default function DataTable<T extends { id: string | number }>({
   pagination,
 }: Props<T>) {
   const [localSearch, setLocalSearch] = useState("");
-  const { t } = useLanguage();
 
   const handleSearch = (q: string) => {
     if (onSearchChange) {
@@ -160,7 +158,7 @@ return allSearchableStrings.includes(lowerSearch);
           {isLoading && <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />}
         </div>
         <div className="flex-1 max-w-2xl">
-          <SearchInput onSearch={handleSearch} placeholder={t("table.search")} />
+          <SearchInput onSearch={handleSearch} placeholder="Rechercher..." />
         </div>
       </div>
 
@@ -199,7 +197,7 @@ return allSearchableStrings.includes(lowerSearch);
               ) : (
                 <tr>
                   <td colSpan={columns.length} className="py-10 text-center text-slate-400 text-sm italic">
-                    {isLoading ? t("common.loading") : "aucun donnée pour l'instant"}
+                    {isLoading ? "Chargement..." : "Aucune donnée pour l'instant"}
                   </td>
                 </tr>
               )}

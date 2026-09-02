@@ -2,7 +2,6 @@
 
 import { X, Check, AlertCircle, Globe, Lock } from "lucide-react";
 import { useState } from "react";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 interface IntentionDetailsModalProps {
   isOpen: boolean;
@@ -19,7 +18,6 @@ export default function IntentionDetailsModal({
   onMarkAsPrie,
   onMarkAsClosed,
 }: IntentionDetailsModalProps) {
-  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
 
   if (!isOpen || !intention) return null;

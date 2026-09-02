@@ -1,50 +1,48 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { publiciteService, Publicite } from "@/services/admin/publicite.service";
+import { heroSlideService, HeroSlide } from "@/services/admin/hero-slide.service";
 import { X, Loader, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-interface PubliciteModalProps {
+interface HeroSlideModalProps {
   isOpen: boolean;
   onClose: (shouldRefresh: boolean) => void;
-  publicite: Publicite | null;
+  slide: HeroSlide | null;
+  deviceType?: 'site' | 'mobile';
 }
 
-export default function PubliciteModal({ isOpen, onClose, publicite }: PubliciteModalProps) {
+export default function HeroSlideModal({ isOpen, onClose, slide, deviceType }: HeroSlideModalProps) {
   const [formData, setFormData] = useState<any>({
     titre: "",
-    description: "",
-    lien_url: "",
-    position: "SIDEBAR",
+    sous_titre: "",
+    type: "IMAGE",
+    lien: "",
     ordre: 1,
     actif: true,
-    date_debut: "",
-    date_fin: "",
+    device_type: deviceType || null,
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (publicite) {
-      setFormData(publicite);
-      setImagePreview(publicite.image || "");
+    if (slide) {
+      setFormData(slide);
+      setMediaPreview(slide.type === "IMAGE" ? (slide.image || "") : (slide.video || ""));
     } else {
       setFormData({
         titre: "",
-        description: "",
-        lien_url: "",
-        position: "SIDEBAR",
+        sous_titre: "",
+        type: "IMAGE",
+        lien: "",
         ordre: 1,
         actif: true,
-        date_debut: "",
-        date_fin: "",
       });
-      setImageFile(null);
-      setImagePreview("");
+      setMediaFile(null);
+      setMediaPreview("");
     }
-  }, [publicite, isOpen]);
+  }, [slide, isOpen, deviceType]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -54,13 +52,13 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
+      setMediaFile(file);
       const reader = new FileReader();
       reader.onload = (evt) => {
-        setImagePreview(evt.target?.result as string);
+        setMediaPreview(evt.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -79,24 +77,31 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
 
       const payload = new FormData();
       payload.append("titre", formData.titre);
-      payload.append("description", formData.description || "");
-      payload.append("lien_url", formData.lien_url || "");
-      payload.append("position", formData.position);
+      payload.append("sous_titre", formData.sous_titre || "");
+      payload.append("type", formData.type);
+      payload.append("lien", formData.lien || "");
       payload.append("ordre", formData.ordre);
       payload.append("actif", formData.actif ? "1" : "0");
-      payload.append("date_debut", formData.date_debut || "");
-      payload.append("date_fin", formData.date_fin || "");
-
-      if (imageFile) {
-        payload.append("image", imageFile);
+      
+      // Always send device_type from the prop
+      if (deviceType) {
+        payload.append("device_type", deviceType);
       }
 
-      if (publicite?.id) {
-        await publiciteService.update(publicite.id, payload);
-        toast.success("Publicité mise à jour");
+      if (mediaFile) {
+        if (formData.type === "IMAGE") {
+          payload.append("image", mediaFile);
+        } else {
+          payload.append("video", mediaFile);
+        }
+      }
+
+      if (slide?.id) {
+        await heroSlideService.update(slide.id, payload);
+        toast.success("Bannière mise à jour");
       } else {
-        await publiciteService.create(payload);
-        toast.success("Publicité créée");
+        await heroSlideService.create(payload);
+        toast.success("Bannière créée");
       }
 
       onClose(true);
@@ -109,6 +114,8 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
 
   if (!isOpen) return null;
 
+  const isImageType = formData.type === "IMAGE";
+
   return (
     <>
       <div className="fixed inset-0 bg-[#0E241C]/60 backdrop-blur-sm z-[9998]" onClick={() => onClose(false)} />
@@ -119,10 +126,10 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
           <div className="sticky top-0 bg-white border-b border-[#163A2C]/10 p-6 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-black text-[#163A2C]">
-                {publicite ? "Modifier la publicité" : "Créer une publicité"}
+                {slide ? "Modifier la bannière" : "Créer une bannière"}
               </h2>
               <p className="text-sm text-[#163A2C]/60 mt-1">
-                {publicite ? "Modifiez les détails" : "Ajoutez une nouvelle publicité"}
+                {slide ? "Modifiez les détails" : "Ajoutez une nouvelle bannière Hero"}
               </p>
             </div>
             <button
@@ -135,20 +142,40 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Image Upload */}
+            {/* Type */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Image (optionnel)
+                Type de média
+              </label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
+              >
+                <option value="IMAGE">🖼️ Image</option>
+                <option value="VIDEO">🎬 Vidéo</option>
+              </select>
+            </div>
+
+            {/* Media Upload */}
+            <div>
+              <label className="block text-sm font-bold text-[#163A2C] mb-2">
+                {isImageType ? "Image" : "Vidéo"} (optionnel)
               </label>
               <div className="border-2 border-dashed border-[#163A2C]/20 rounded-xl p-4">
-                {imagePreview ? (
+                {mediaPreview ? (
                   <div className="relative">
-                    <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-lg" />
+                    {isImageType ? (
+                      <img src={mediaPreview} alt="Preview" className="w-full h-40 object-cover rounded-lg" />
+                    ) : (
+                      <video src={mediaPreview} className="w-full h-40 object-cover rounded-lg" />
+                    )}
                     <button
                       type="button"
                       onClick={() => {
-                        setImageFile(null);
-                        setImagePreview("");
+                        setMediaFile(null);
+                        setMediaPreview("");
                       }}
                       className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
                     >
@@ -159,12 +186,12 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                   <label className="cursor-pointer flex flex-col items-center justify-center py-8">
                     <Upload className="w-8 h-8 text-[#163A2C]/40 mb-2" />
                     <span className="text-sm font-bold text-[#163A2C]/60">
-                      Cliquez pour charger une image
+                      Cliquez pour charger un {isImageType ? "image" : "vidéo"}
                     </span>
                     <input
                       type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
+                      accept={isImageType ? "image/*" : "video/*"}
+                      onChange={handleMediaChange}
                       className="hidden"
                     />
                   </label>
@@ -182,61 +209,43 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                 name="titre"
                 value={formData.titre}
                 onChange={handleChange}
-                placeholder="Titre de la publicité"
+                placeholder="Titre principal"
                 maxLength={150}
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
               />
               <p className="text-xs text-[#163A2C]/50 mt-1">{formData.titre.length}/150</p>
             </div>
 
-            {/* Description */}
+            {/* Sous-titre */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Description (optionnel)
+                Sous-titre (optionnel)
               </label>
-              <textarea
-                name="description"
-                value={formData.description}
+              <input
+                type="text"
+                name="sous_titre"
+                value={formData.sous_titre}
                 onChange={handleChange}
-                placeholder="Description"
-                maxLength={500}
-                rows={4}
-                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C] resize-none"
+                placeholder="Sous-titre"
+                maxLength={150}
+                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
               />
-              <p className="text-xs text-[#163A2C]/50 mt-1">{formData.description.length}/500</p>
+              <p className="text-xs text-[#163A2C]/50 mt-1">{formData.sous_titre.length}/150</p>
             </div>
 
-            {/* URL Lien */}
+            {/* Lien */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
                 URL de lien (optionnel)
               </label>
               <input
                 type="url"
-                name="lien_url"
-                value={formData.lien_url}
+                name="lien"
+                value={formData.lien}
                 onChange={handleChange}
                 placeholder="https://..."
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
               />
-            </div>
-
-            {/* Position */}
-            <div>
-              <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Position
-              </label>
-              <select
-                name="position"
-                value={formData.position}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
-              >
-                <option value="HEADER">En-tête</option>
-                <option value="SIDEBAR">Barre latérale</option>
-                <option value="FOOTER">Pied de page</option>
-                <option value="POPUP">Pop-up</option>
-              </select>
             </div>
 
             {/* Ordre */}
@@ -254,34 +263,6 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
               />
             </div>
 
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                  Début (optionnel)
-                </label>
-                <input
-                  type="datetime-local"
-                  name="date_debut"
-                  value={formData.date_debut ? formData.date_debut.slice(0, 16) : ""}
-                  onChange={(e) => setFormData({ ...formData, date_debut: e.target.value })}
-                  className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                  Fin (optionnel)
-                </label>
-                <input
-                  type="datetime-local"
-                  name="date_fin"
-                  value={formData.date_fin ? formData.date_fin.slice(0, 16) : ""}
-                  onChange={(e) => setFormData({ ...formData, date_fin: e.target.value })}
-                  className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
-                />
-              </div>
-            </div>
-
             {/* Actif */}
             <div className="flex items-center gap-3 p-4 bg-[#163A2C]/5 rounded-xl">
               <input
@@ -293,7 +274,7 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                 className="w-5 h-5 accent-[#163A2C]"
               />
               <label htmlFor="actif" className="font-bold text-[#163A2C] cursor-pointer">
-                Activer cette publicité
+                Activer cette bannière
               </label>
             </div>
 
@@ -316,7 +297,7 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                     <Loader size={18} className="animate-spin" />
                     Enregistrement...
                   </>
-                ) : publicite ? (
+                ) : slide ? (
                   "Mettre à jour"
                 ) : (
                   "Créer"

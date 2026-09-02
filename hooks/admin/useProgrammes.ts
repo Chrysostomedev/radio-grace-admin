@@ -28,10 +28,10 @@ export function useProgrammes() {
     const res = await programmeService.getAll(params);
     console.log("RAW programmes response", res.data); // <- regarde ça dans ta console
 
-    const payload = res.data;
-    const list = payload.data ?? payload ?? [];
+    const payload = (res as any).data ?? res;
+    const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
     setProgrammes(Array.isArray(list) ? list : []);
-    setLastPage(payload.last_page ?? 1);
+    setLastPage(payload?.last_page ?? 1);
   } catch (e: any) {
     console.error("Erreur fetch programmes", e.response?.data || e);
     setProgrammes([]);

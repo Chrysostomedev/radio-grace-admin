@@ -1,50 +1,52 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { publiciteService, Publicite } from "@/services/admin/publicite.service";
+import { partenaireService, Partenaire } from "@/services/admin/partenaire.service";
 import { X, Loader, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-interface PubliciteModalProps {
+interface PartenaireModalProps {
   isOpen: boolean;
   onClose: (shouldRefresh: boolean) => void;
-  publicite: Publicite | null;
+  partenaire: Partenaire | null;
 }
 
-export default function PubliciteModal({ isOpen, onClose, publicite }: PubliciteModalProps) {
+export default function PartenaireModal({ isOpen, onClose, partenaire }: PartenaireModalProps) {
   const [formData, setFormData] = useState<any>({
-    titre: "",
+    nom: "",
     description: "",
-    lien_url: "",
-    position: "SIDEBAR",
+    type: "PARTENAIRE",
+    site_url: "",
+    email: "",
+    telephone: "",
+    adresse: "",
     ordre: 1,
     actif: true,
-    date_debut: "",
-    date_fin: "",
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (publicite) {
-      setFormData(publicite);
-      setImagePreview(publicite.image || "");
+    if (partenaire) {
+      setFormData(partenaire);
+      setLogoPreview(partenaire.logo || "");
     } else {
       setFormData({
-        titre: "",
+        nom: "",
         description: "",
-        lien_url: "",
-        position: "SIDEBAR",
+        type: "PARTENAIRE",
+        site_url: "",
+        email: "",
+        telephone: "",
+        adresse: "",
         ordre: 1,
         actif: true,
-        date_debut: "",
-        date_fin: "",
       });
-      setImageFile(null);
-      setImagePreview("");
+      setLogoFile(null);
+      setLogoPreview("");
     }
-  }, [publicite, isOpen]);
+  }, [partenaire, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -54,13 +56,13 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
+      setLogoFile(file);
       const reader = new FileReader();
       reader.onload = (evt) => {
-        setImagePreview(evt.target?.result as string);
+        setLogoPreview(evt.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -69,8 +71,8 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.titre.trim()) {
-      toast.error("Le titre est requis");
+    if (!formData.nom.trim()) {
+      toast.error("Le nom du partenaire est requis");
       return;
     }
 
@@ -78,25 +80,26 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
       setLoading(true);
 
       const payload = new FormData();
-      payload.append("titre", formData.titre);
+      payload.append("nom", formData.nom);
       payload.append("description", formData.description || "");
-      payload.append("lien_url", formData.lien_url || "");
-      payload.append("position", formData.position);
+      payload.append("type", formData.type);
+      payload.append("site_url", formData.site_url || "");
+      payload.append("email", formData.email || "");
+      payload.append("telephone", formData.telephone || "");
+      payload.append("adresse", formData.adresse || "");
       payload.append("ordre", formData.ordre);
       payload.append("actif", formData.actif ? "1" : "0");
-      payload.append("date_debut", formData.date_debut || "");
-      payload.append("date_fin", formData.date_fin || "");
 
-      if (imageFile) {
-        payload.append("image", imageFile);
+      if (logoFile) {
+        payload.append("logo", logoFile);
       }
 
-      if (publicite?.id) {
-        await publiciteService.update(publicite.id, payload);
-        toast.success("Publicité mise à jour");
+      if (partenaire?.id) {
+        await partenaireService.update(partenaire.id, payload);
+        toast.success("Partenaire mis à jour");
       } else {
-        await publiciteService.create(payload);
-        toast.success("Publicité créée");
+        await partenaireService.create(payload);
+        toast.success("Partenaire créé");
       }
 
       onClose(true);
@@ -119,10 +122,10 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
           <div className="sticky top-0 bg-white border-b border-[#163A2C]/10 p-6 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-black text-[#163A2C]">
-                {publicite ? "Modifier la publicité" : "Créer une publicité"}
+                {partenaire ? "Modifier le partenaire" : "Ajouter un partenaire"}
               </h2>
               <p className="text-sm text-[#163A2C]/60 mt-1">
-                {publicite ? "Modifiez les détails" : "Ajoutez une nouvelle publicité"}
+                {partenaire ? "Modifiez les informations" : "Ajoutez un nouveau partenaire/sponsor"}
               </p>
             </div>
             <button
@@ -135,20 +138,22 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Image Upload */}
+            {/* Logo Upload */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Image (optionnel)
+                Logo (optionnel)
               </label>
               <div className="border-2 border-dashed border-[#163A2C]/20 rounded-xl p-4">
-                {imagePreview ? (
+                {logoPreview ? (
                   <div className="relative">
-                    <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-lg" />
+                    <div className="h-32 flex items-center justify-center bg-[#FBF6EA] rounded-lg">
+                      <img src={logoPreview} alt="Preview" className="max-w-full max-h-full object-contain p-2" />
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
-                        setImageFile(null);
-                        setImagePreview("");
+                        setLogoFile(null);
+                        setLogoPreview("");
                       }}
                       className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
                     >
@@ -159,12 +164,12 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                   <label className="cursor-pointer flex flex-col items-center justify-center py-8">
                     <Upload className="w-8 h-8 text-[#163A2C]/40 mb-2" />
                     <span className="text-sm font-bold text-[#163A2C]/60">
-                      Cliquez pour charger une image
+                      Cliquez pour charger un logo
                     </span>
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleImageChange}
+                      onChange={handleLogoChange}
                       className="hidden"
                     />
                   </label>
@@ -172,21 +177,37 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
               </div>
             </div>
 
-            {/* Titre */}
+            {/* Nom */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Titre *
+                Nom du partenaire *
               </label>
               <input
                 type="text"
-                name="titre"
-                value={formData.titre}
+                name="nom"
+                value={formData.nom}
                 onChange={handleChange}
-                placeholder="Titre de la publicité"
+                placeholder="Nom"
                 maxLength={150}
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
               />
-              <p className="text-xs text-[#163A2C]/50 mt-1">{formData.titre.length}/150</p>
+            </div>
+
+            {/* Type */}
+            <div>
+              <label className="block text-sm font-bold text-[#163A2C] mb-2">
+                Type de partenaire
+              </label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
+              >
+                <option value="PARTENAIRE">Partenaire</option>
+                <option value="SPONSEUR">Sponseur</option>
+                <option value="DISTRIBUTEUR">Distributeur</option>
+              </select>
             </div>
 
             {/* Description */}
@@ -198,7 +219,7 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Description"
+                placeholder="Description du partenaire"
                 maxLength={500}
                 rows={4}
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C] resize-none"
@@ -206,37 +227,65 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
               <p className="text-xs text-[#163A2C]/50 mt-1">{formData.description.length}/500</p>
             </div>
 
-            {/* URL Lien */}
+            {/* Contact Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#163A2C] mb-2">
+                  Email (optionnel)
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="email@example.com"
+                  className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#163A2C] mb-2">
+                  Téléphone (optionnel)
+                </label>
+                <input
+                  type="tel"
+                  name="telephone"
+                  value={formData.telephone}
+                  onChange={handleChange}
+                  placeholder="+225 XX XX XX XX"
+                  className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
+                />
+              </div>
+            </div>
+
+            {/* Site URL */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                URL de lien (optionnel)
+                Site web (optionnel)
               </label>
               <input
                 type="url"
-                name="lien_url"
-                value={formData.lien_url}
+                name="site_url"
+                value={formData.site_url}
                 onChange={handleChange}
-                placeholder="https://..."
+                placeholder="https://example.com"
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
               />
             </div>
 
-            {/* Position */}
+            {/* Adresse */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Position
+                Adresse (optionnel)
               </label>
-              <select
-                name="position"
-                value={formData.position}
+              <input
+                type="text"
+                name="adresse"
+                value={formData.adresse}
                 onChange={handleChange}
+                placeholder="Adresse complète"
+                maxLength={200}
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
-              >
-                <option value="HEADER">En-tête</option>
-                <option value="SIDEBAR">Barre latérale</option>
-                <option value="FOOTER">Pied de page</option>
-                <option value="POPUP">Pop-up</option>
-              </select>
+              />
             </div>
 
             {/* Ordre */}
@@ -254,34 +303,6 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
               />
             </div>
 
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                  Début (optionnel)
-                </label>
-                <input
-                  type="datetime-local"
-                  name="date_debut"
-                  value={formData.date_debut ? formData.date_debut.slice(0, 16) : ""}
-                  onChange={(e) => setFormData({ ...formData, date_debut: e.target.value })}
-                  className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                  Fin (optionnel)
-                </label>
-                <input
-                  type="datetime-local"
-                  name="date_fin"
-                  value={formData.date_fin ? formData.date_fin.slice(0, 16) : ""}
-                  onChange={(e) => setFormData({ ...formData, date_fin: e.target.value })}
-                  className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
-                />
-              </div>
-            </div>
-
             {/* Actif */}
             <div className="flex items-center gap-3 p-4 bg-[#163A2C]/5 rounded-xl">
               <input
@@ -293,7 +314,7 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                 className="w-5 h-5 accent-[#163A2C]"
               />
               <label htmlFor="actif" className="font-bold text-[#163A2C] cursor-pointer">
-                Activer cette publicité
+                Activer ce partenaire
               </label>
             </div>
 
@@ -316,7 +337,7 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                     <Loader size={18} className="animate-spin" />
                     Enregistrement...
                   </>
-                ) : publicite ? (
+                ) : partenaire ? (
                   "Mettre à jour"
                 ) : (
                   "Créer"

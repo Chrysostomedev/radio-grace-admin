@@ -1,6 +1,5 @@
 "use client";
 import { Edit2, Trash2, MessageCircle, Users, Clock, Play, Calendar, Mic2 } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 
 interface Emission {
@@ -52,20 +51,21 @@ export default function EmissionCard({ emission, onEdit, onDelete, onPlay }: Pro
   const status = STATUS_STYLES[emission.status] ?? STATUS_STYLES.active;
 const isLive = (emission as any).en_direct_maintenant || (emission as any).en_direct || emission.status === "live";
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-[28px] bg-[#0E241C] ring-1 ring-black/5 shadow-[0_6px_20px_rgba(14,36,28,0.10)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_24px_48px_rgba(14,36,28,0.28)]">
-
+<div
+  onClick={() => onPlay?.(emission)}
+  className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[28px] bg-[#0E241C] ring-1 ring-black/5 shadow-[0_6px_20px_rgba(14,36,28,0.10)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_24px_48px_rgba(14,36,28,0.28)]"
+>
       {/* IMAGE / BANDEAU VISUEL */}
       <div className="relative h-64 w-full overflow-hidden">
-        {emission.image && !imgError && !emission.image.match(/\.(mp4|webm|ogg)$/i) ? (
-          <Image
-            src={emission.image}
-            alt={emission.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 320px"
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            onError={() => setImgError(true)}
-          />
-        ) : (
+        // (supprime l'import "next/image")
+{emission.image && !imgError && !emission.image.match(/\.(mp4|webm|ogg)$/i) ? (
+  <img
+    src={emission.image}
+    alt={emission.title}
+    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+    onError={() => setImgError(true)}
+  />
+) : (
           <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${style.gradient}`}>
             <Mic2 size={44} strokeWidth={1.5} className="text-white/25" />
           </div>

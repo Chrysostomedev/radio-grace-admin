@@ -103,10 +103,10 @@ export default function Navbar() {
 
   // Les onglets spécifiques au site
   const SITE_TABS = [
-    { label: 'Partenaires', href: '/admin/site/publicites?position=PARTENAIRE' },
-    { label: 'Publicités', href: '/admin/site/publicites?position=BANNER' },
-    { label: 'Accueil de programme', href: '/admin/actualites?a_la_une=true' },
-    { label: 'Infos-flash', href: '/admin/actualites' },
+    { label: 'Sections Slides du site', href: '/admin/site/hero-slides' },
+    { label: 'Infos-Flash', href: '/admin/site/flashs' },
+    { label: 'Publicités', href: '/admin/site/publicites' },
+    { label: 'Partenaires', href: '/admin/site/partenaires' },
   ];
 
   const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length;

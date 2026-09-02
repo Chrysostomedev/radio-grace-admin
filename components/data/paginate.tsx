@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PaginationProps {
   currentPage: number;
@@ -10,7 +9,6 @@ interface PaginationProps {
 }
 
 export default function Paginate({ currentPage, totalPages, onPageChange }: PaginationProps) {
-  const { t } = useLanguage();
 
   const getVisiblePages = () => {
     const delta = 2; // Number of pages to show around current page
@@ -54,7 +52,7 @@ export default function Paginate({ currentPage, totalPages, onPageChange }: Pagi
         type="button"
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
-        aria-label={t("pagination.previous")}
+        aria-label="Page précédente"
         className={`p-4 rounded-2xl transition-all ${
           currentPage === 1
             ? "bg-slate-50 text-slate-300 cursor-not-allowed"
@@ -98,7 +96,7 @@ export default function Paginate({ currentPage, totalPages, onPageChange }: Pagi
         type="button"
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
-        aria-label={t("pagination.next")}
+        aria-label="Page suivante"
         className={`p-4 rounded-2xl transition-all ${
           currentPage === totalPages
             ? "bg-slate-50 text-slate-300 cursor-not-allowed"

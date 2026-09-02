@@ -52,19 +52,13 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Tableau de bord", icon: LayoutDashboard, href: "/admin/dashboard" },
   {
-    label: "Actualités", icon: Newspaper, href: "/admin/actualites",
-  },
+    label: "Actualités", icon: Newspaper, href: "/admin/actualites",},
+   {label: "Bannières des annonces Mobile", icon: ListMusic, href: "/admin/hero-mobile",},
    {
     label: "Grille des programmes", icon: ListMusic, href: "/admin/programmes/grille",
-    
   },
   {
-    label: "Émissions", icon: ListMusic, href: "/admin/emissions",
-    // submenu: [
-
-    //   { label: "Direct & Replay", href: "/admin/emissions/direct" },
-    // ],
-  },
+    label: "Émissions", icon: ListMusic, href: "/admin/emissions",  },
   { label: "Podcasts", icon: Music2Icon, href: "/admin/podcasts" },
   { label: "Événements", icon: CalendarDays, href: "/admin/evenements" },
   { label: "Boutique", icon: ShoppingBag, href: "/admin/boutique" },

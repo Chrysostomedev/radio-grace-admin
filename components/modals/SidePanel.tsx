@@ -25,7 +25,6 @@
 import { X, Copy, Check, ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 // Bouton réutilisable inline (remplace l'import manquant de FormButton)
 function FormButton({
@@ -96,7 +95,6 @@ export default function SideDetailsPanel({
   customAction,
   customActionLabel,
 }: SideDetailsPanelProps) {
-  const { t } = useLanguage();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
@@ -109,7 +107,7 @@ export default function SideDetailsPanel({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const defaultSubtitle = subtitle ?? t("common.back");
+  const defaultSubtitle = subtitle ?? "Retour";
 
   // ── Décide si le footer doit s'afficher ────────────────────────────────────
   // Footer visible uniquement si au moins une action est disponible
@@ -132,7 +130,7 @@ export default function SideDetailsPanel({
           className="side-details-panel__mobile-back border-none bg-transparent text-slate-800 flex items-center gap-2 px-4 py-3"
         >
           <ChevronLeft size={20} />
-          <span>{t("common.back")}</span>
+          <span>Retour</span>
         </button>
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -261,10 +259,10 @@ export default function SideDetailsPanel({
             {onEdit && !redirectHref && !customAction && (
               <div className="flex gap-4">
                 <FormButton variant="secondary" onClick={onClose} className="flex-1">
-                  {t("common.cancel")}
+                  Annuler
                 </FormButton>
                 <FormButton variant="primary" onClick={onEdit} className="flex-1">
-                  {t("common.edit")}
+                  Modifier
                 </FormButton>
               </div>
             )}
@@ -273,10 +271,10 @@ export default function SideDetailsPanel({
             {onEdit && redirectHref && !customAction && (
               <div className="flex gap-4">
                 <FormButton variant="secondary" onClick={onClose} className="flex-1">
-                  {t("common.cancel")}
+                  Annuler
                 </FormButton>
                 <FormButton variant="primary" onClick={onEdit} className="flex-1">
-                  {t("common.edit")}
+                  Modifier
                 </FormButton>
               </div>
             )}

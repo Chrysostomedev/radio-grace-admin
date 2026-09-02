@@ -74,7 +74,7 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
 // ── Card ──────────────────────────────────────────────────────────────────────
 export default function DonutCard({
     title,
-    subtitle = "Tâches Exécutées  sur  Tâches Totales",
+    subtitle = " Exécutées  sur  ",
     segments,
     viewAllHref,
     viewAllText = "Voir tous",
@@ -114,7 +114,7 @@ export default function DonutCard({
                                 {seg.label}
                             </span>
                             <span className="text-[11px] text-slate-400 font-semibold shrink-0 tabular-nums">
-                                {seg.done}/{seg.total} Tâches
+                                {seg.done}/{seg.total} Horaires
                             </span>
                         </div>
                     ))}

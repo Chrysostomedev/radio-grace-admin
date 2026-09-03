@@ -8,6 +8,7 @@ export interface IntentionPriere {
   telephone?: string;
   is_public: boolean;
   is_anonyme: boolean;
+  statut?: 'EN_ATTENTE' | 'PRIE' | 'CLOTURE';
   montant_don?: number;
   statut_paiement?: 'NON_PAYEE' | 'EN_ATTENTE' | 'PAYEE' | 'ERREUR' | 'ANNULEE';
   transaction_id?: string;

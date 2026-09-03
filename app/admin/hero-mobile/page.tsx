@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { heroSlideService, HeroSlide } from "@/services/admin/hero-slide.service";
-import { Plus, Edit2, Trash2, Eye, EyeOff, Loader, Smartphone, Play, Pause } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, Loader, Smartphone, Play, Pause, ChevronUp, ChevronDown } from "lucide-react";
 import HeroSlideModal from "@/components/modals/HeroSlideModal";
 import { toast } from "sonner";
 
@@ -14,13 +14,17 @@ export default function HeroMobilePage() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
+  const [updatingOrder, setUpdatingOrder] = useState<number | null>(null);
 
   const loadSlides = async () => {
     try {
       setLoading(true);
       const response = await heroSlideService.getAll({ per_page: 50 });
-      // Filter only for mobile display
-      const mobileSlides = (response.data || []).filter((slide: any) => slide.device_type === 'mobile');
+      // Filter only for mobile display and sort by ordre
+      // Accepte device_type === 'mobile' OU null (rétrocompatibilité)
+      const mobileSlides = (response.data || [])
+        .filter((slide: any) => slide.device_type === 'mobile' || slide.device_type === null)
+        .sort((a: any, b: any) => (a.ordre ?? 0) - (b.ordre ?? 0));
       setSlides(mobileSlides);
     } catch (error: any) {
       toast.error(error.message || "Erreur chargement des bannieres mobiles");
@@ -68,6 +72,72 @@ export default function HeroMobilePage() {
       toast.error(error.message || "Erreur activation");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleMoveUp = async (index: number) => {
+    if (index === 0) return;
+
+    try {
+      setUpdatingOrder(slides[index].id);
+      const currentSlide = slides[index];
+      const previousSlide = slides[index - 1];
+
+      // Swap ordre values
+      const newCurrentOrdre = (previousSlide.ordre ?? index - 1);
+      const newPreviousOrdre = (currentSlide.ordre ?? index);
+
+      // Update both slides
+      const formData1 = new FormData();
+      formData1.append('ordre', String(newCurrentOrdre));
+      
+      const formData2 = new FormData();
+      formData2.append('ordre', String(newPreviousOrdre));
+
+      await Promise.all([
+        heroSlideService.update(currentSlide.id, formData1),
+        heroSlideService.update(previousSlide.id, formData2),
+      ]);
+
+      toast.success("Ordre mis à jour");
+      await loadSlides();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur réorganisation");
+    } finally {
+      setUpdatingOrder(null);
+    }
+  };
+
+  const handleMoveDown = async (index: number) => {
+    if (index === slides.length - 1) return;
+
+    try {
+      setUpdatingOrder(slides[index].id);
+      const currentSlide = slides[index];
+      const nextSlide = slides[index + 1];
+
+      // Swap ordre values
+      const newCurrentOrdre = (nextSlide.ordre ?? index + 1);
+      const newNextOrdre = (currentSlide.ordre ?? index);
+
+      // Update both slides
+      const formData1 = new FormData();
+      formData1.append('ordre', String(newCurrentOrdre));
+      
+      const formData2 = new FormData();
+      formData2.append('ordre', String(newNextOrdre));
+
+      await Promise.all([
+        heroSlideService.update(currentSlide.id, formData1),
+        heroSlideService.update(nextSlide.id, formData2),
+      ]);
+
+      toast.success("Ordre mis à jour");
+      await loadSlides();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur réorganisation");
+    } finally {
+      setUpdatingOrder(null);
     }
   };
 
@@ -131,7 +201,6 @@ export default function HeroMobilePage() {
         </div>
       ) : slides.length === 0 ? (
         <div className="py-16 text-center bg-white rounded-2xl border border-dashed border-[#163A2C]/20">
-          <div className="text-4xl mb-3">📱</div>
           <p className="text-[#163A2C]/60 font-medium">Aucune bannière mobile créée</p>
           <p className="text-[#163A2C]/40 text-sm mt-1">Les bannières mobiles permettent un défilement immersif avec vidéo/image et texte</p>
           <button
@@ -143,35 +212,78 @@ export default function HeroMobilePage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {slides.map((slide) => (
+          {slides.map((slide, index) => (
             <div
               key={slide.id}
               className="bg-white rounded-2xl border border-[#163A2C]/10 overflow-hidden hover:shadow-lg transition group"
             >
               <div className="flex items-start gap-4 p-4">
+                {/* Reorder Controls */}
+                <div className="flex flex-col gap-1 shrink-0">
+                  <button
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0 || updatingOrder === slide.id}
+                    className="p-1.5 rounded bg-[#163A2C]/10 text-[#163A2C] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#163A2C]/20 transition"
+                    title="Monter"
+                  >
+                    <ChevronUp size={14} />
+                  </button>
+                  <span className="text-xs font-bold text-[#163A2C]/60 px-2 py-1 text-center">
+                    {index + 1}/{slides.length}
+                  </span>
+                  <button
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === slides.length - 1 || updatingOrder === slide.id}
+                    className="p-1.5 rounded bg-[#163A2C]/10 text-[#163A2C] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#163A2C]/20 transition"
+                    title="Descendre"
+                  >
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
+
                 {/* Media Preview - Mobile Size */}
-                <div className="relative w-24 h-40 bg-[#FBF6EA] rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
+                <div className="relative w-24 h-40 bg-gradient-to-br from-[#FBF6EA] to-[#F0E5D3] rounded-xl overflow-hidden shrink-0 flex items-center justify-center border border-[#163A2C]/10">
                   {slide.type === "IMAGE" && slide.image ? (
-                    <img
-                      src={slide.image}
-                      alt={slide.titre}
-                      className="w-full h-full object-cover"
-                    />
+                    <>
+                      <img
+                        src={slide.image}
+                        alt={slide.titre}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement?.querySelector('[data-fallback]')?.classList.remove('hidden');
+                        }}
+                      />
+                      <div data-fallback className="hidden absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#FBF6EA] to-[#F0E5D3]">
+                        <span className="text-lg mb-0.5">🖼️</span>
+                        <p className="text-[#163A2C]/40 text-[10px] text-center px-1">Image</p>
+                      </div>
+                    </>
+                  ) : slide.type === "IMAGE" ? (
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                      <span className="text-xl mb-1">⚠️</span>
+                      <p className="text-[#CA8A04] text-[10px] text-center px-2 font-bold">Image requise</p>
+                    </div>
                   ) : slide.type === "VIDEO" && slide.video ? (
                     <div
-                      className="w-full h-full relative bg-[#163A2C]/20 cursor-pointer group/video flex items-center justify-center"
+                      className="w-full h-full relative bg-gradient-to-br from-[#163A2C]/40 to-[#163A2C]/60 cursor-pointer group/video flex items-center justify-center"
                       onMouseEnter={() => setPlayingId(slide.id)}
                       onMouseLeave={() => setPlayingId(null)}
                     >
                       <div className="absolute inset-0 bg-[#163A2C]/40 group-hover/video:bg-[#163A2C]/60 transition" />
                       {playingId === slide.id ? (
-                        <Pause size={28} className="text-white relative z-10" />
+                        <Pause size={24} className="text-white relative z-10" />
                       ) : (
-                        <Play size={28} className="text-white relative z-10" />
+                        <Play size={24} className="text-white relative z-10" />
                       )}
-                      <p className="absolute bottom-2 left-2 right-2 text-xs text-white font-bold truncate">
+                      <p className="absolute bottom-1 left-1 right-1 text-[9px] text-white font-bold truncate">
                         {slide.titre}
                       </p>
+                    </div>
+                  ) : slide.type === "VIDEO" ? (
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                      <span className="text-xl mb-1">⚠️</span>
+                      <p className="text-[#CA8A04] text-[10px] text-center px-2 font-bold">Vidéo requise</p>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center">
@@ -220,7 +332,7 @@ export default function HeroMobilePage() {
                     </span>
 
                     <span className="text-xs font-bold text-[#163A2C]/60 px-2 py-1 bg-[#163A2C]/5 rounded">
-                      Ordre: {slide.ordre || "-"}
+                      Ordre: {slide.ordre || index}
                     </span>
 
                     {slide.lien && (

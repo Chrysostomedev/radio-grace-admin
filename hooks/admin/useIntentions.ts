@@ -18,8 +18,8 @@ export function useIntentions() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const markAsPrie = async (id: number, statut: string = "PAYEE") => {
-    await intentionService.update(id, { statut_paiement: statut as any });
+  const markAsPrie = async (id: number, statut: string = "PRIE") => {
+    await intentionService.update(id, { statut });
   };
 
   const refresh = async () => {

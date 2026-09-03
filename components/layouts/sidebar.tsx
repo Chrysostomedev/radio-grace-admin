@@ -8,6 +8,11 @@ import {
   Music2Icon,
   HandCoins,
   User2,
+  CalendarClock,
+  Podcast,
+  Mic2,
+  UserRound,
+  UserRoundArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -49,25 +54,23 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 }
 
 // ── Nav RGE — ADMIN ──────────────────────────────────────────────────────────
-const ADMIN_NAV_ITEMS: NavItem[] = [
-  { label: "Tableau de bord", icon: LayoutDashboard, href: "/admin/dashboard" },
-  {
-    label: "Actualités", icon: Newspaper, href: "/admin/actualites",},
-   {label: "Bannières des annonces Mobile", icon: ListMusic, href: "/admin/hero-mobile",},
-   {
-    label: "Grille des programmes", icon: ListMusic, href: "/admin/programmes/grille",
-  },
-  {
-    label: "Émissions", icon: ListMusic, href: "/admin/emissions",  },
-  { label: "Podcasts", icon: Music2Icon, href: "/admin/podcasts" },
-  { label: "Événements", icon: CalendarDays, href: "/admin/evenements" },
-  { label: "Boutique", icon: ShoppingBag, href: "/admin/boutique" },
-  { label: "Intentions de prière", icon: HeartHandshake, href: "/admin/intentions" },
-  { label: "Direct ", icon: RadioTower, href: "/admin/direct" },
-  { label: "Dons", icon: HandCoins, href: "/admin/dons" },
-  { label: "Animateurs", icon: User2, href: "/admin/animateurs" },
-  { label: "Utilisateurs", icon: Users, href: "/admin/roles" },
-];
+const ADMIN_NAV_ITEMS: NavItem[] = [ { label: "Tableau de bord",
+   icon: LayoutDashboard, href: "/admin/dashboard" }, {
+     label: "Actualités",
+     icon: Newspaper, href: "/admin/actualites" }, { 
+      label: "Bannières Mobile",
+       icon: Image, href: "/admin/hero-mobile" }, {
+        label: "Grille des programmes",
+         icon: CalendarClock, href: "/admin/programmes/grille" }, { 
+          label: "Émissions", icon: Mic2, href: "/admin/emissions" }, { 
+            label: "Podcasts", icon: Podcast, href: "/admin/podcasts" }, { 
+              label: "Événements", icon: CalendarDays, href: "/admin/evenements" }, { 
+                label: "Boutique", icon: ShoppingBag, href: "/admin/boutique" }, { 
+                  label: "Intentions de prière", icon: HeartHandshake, href: "/admin/intentions" }, {
+                     label: "Direct", icon: RadioTower, href: "/admin/direct" }, { 
+                    label: "Dons", icon: HandCoins, href: "/admin/dons" }, {
+                       label: "Animateurs", icon: UserRoundArrowLeft, href: "/admin/animateurs" }, {
+                         label: "Utilisateurs", icon: Users, href: "/admin/roles" }, ];
 
 const REDACTEUR_NAV_ITEMS: NavItem[] = [
   { label: "Tableau de bord", icon: LayoutDashboard, href: "/redacteur/dashboard" },

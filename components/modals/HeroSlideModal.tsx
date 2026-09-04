@@ -72,6 +72,12 @@ export default function HeroSlideModal({ isOpen, onClose, slide, deviceType }: H
       return;
     }
 
+    // ✅ Valider que media est fournie (sauf si c'est une modification et qu'on garde l'existant)
+    if (!slide && !mediaFile) {
+      toast.error(`Une ${formData.type === "IMAGE" ? "image" : "vidéo"} est requise`);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -83,7 +89,7 @@ export default function HeroSlideModal({ isOpen, onClose, slide, deviceType }: H
       payload.append("ordre", formData.ordre);
       payload.append("actif", formData.actif ? "1" : "0");
       
-      // Always send device_type from the prop
+      // ✅ Envoie device_type seulement si elle est fournie (rétrocompatibilité)
       if (deviceType) {
         payload.append("device_type", deviceType);
       }
@@ -106,7 +112,21 @@ export default function HeroSlideModal({ isOpen, onClose, slide, deviceType }: H
 
       onClose(true);
     } catch (error: any) {
-      toast.error(error.message || "Erreur");
+      // ✅ Gérer les erreurs 422 avec affichage par champ
+      const status = error?.response?.status;
+      const errors = error?.response?.data?.errors;
+      const message = error?.response?.data?.message;
+
+      if (status === 422 && errors) {
+        // Affiche la première erreur
+        const firstErrorField = Object.keys(errors)[0];
+        const firstErrorMsg = Array.isArray(errors[firstErrorField]) 
+          ? errors[firstErrorField][0] 
+          : errors[firstErrorField];
+        toast.error(`${firstErrorField}: ${firstErrorMsg}`);
+      } else {
+        toast.error(message || error.message || "Erreur lors de l'enregistrement");
+      }
     } finally {
       setLoading(false);
     }

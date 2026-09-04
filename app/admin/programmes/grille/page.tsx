@@ -67,13 +67,8 @@ export default function GrillePage() {
         toast.error("Émission invalide", "Erreur");
         return;
       }
-      if (programme.id !== selectedProgrammeId) {
-        toast.error(
-          `Sélectionnez d'abord "${programme.titre}" dans le menu Émission avant de le placer sur la grille`,
-          "Émission différente"
-        );
-        return;
-      }
+      // ✅ Permet le drag and drop de n'importe quel programme, pas juste celui sélectionné
+      // (suppression de la vérification restrictive selectedProgrammeId)
 
       const payload = {
         jour,

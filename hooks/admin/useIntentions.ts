@@ -18,7 +18,7 @@ export function useIntentions() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const markAsPrie = async (id: number, statut: string = "PRIE") => {
+  const markAsPrie = async (id: number, statut: "PRIE" | "CLOTURE" | "EN_ATTENTE" = "PRIE") => {
     await intentionService.update(id, { statut });
   };
 

@@ -145,10 +145,10 @@ const isLive = (emission as any).en_direct_maintenant || (emission as any).en_di
             <span className="inline-flex items-center gap-1 rounded-full bg-[#163A2C]/5 px-2.5 py-1 text-xs font-bold text-[#163A2C]/70">
               <Users size={12} className="text-[#163A2C]/40" /> {emission.participants?.length ?? 3}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#163A2C]/5 px-2.5 py-1 text-xs font-bold text-[#163A2C]/70">
+            {/* <span className="inline-flex items-center gap-1 rounded-full bg-[#163A2C]/5 px-2.5 py-1 text-xs font-bold text-[#163A2C]/70">
               <Calendar size={12} className="text-[#163A2C]/40" />
               {new Date(emission.last_updated).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
-            </span>
+            </span> */}
           </div>
           <span className={`h-2.5 w-2.5 rounded-full ${isLive ? "bg-red-500 ring-4 ring-red-500/15 animate-pulse" : "bg-[#1E9D55] ring-4 ring-[#1E9D55]/10"}`} />
         </div>

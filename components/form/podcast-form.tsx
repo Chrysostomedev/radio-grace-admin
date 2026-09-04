@@ -79,10 +79,11 @@ export default function PodcastForm({
   const onSubmitForm = async (data: PodcastFormData) => {
     try {
       const formData = new FormData();
-      formData.append("programme_id", data.programme_id);
-      formData.append("titre", data.titre);
-      formData.append("description", data.description || "");
-      formData.append("statut", data.statut);
+      // ✅ Envoie seulement les champs définis (pas undefined ou null)
+      if (data.programme_id) formData.append("programme_id", String(data.programme_id));
+      if (data.titre) formData.append("titre", data.titre);
+      if (data.description) formData.append("description", data.description);
+      if (data.statut) formData.append("statut", data.statut);
 
       // Audio : fichier (le backend l'upload vers R2 en arrière-plan)
       if (audioFile) {

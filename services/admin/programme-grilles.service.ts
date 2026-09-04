@@ -32,9 +32,21 @@ export const programmeGrillesService = {
    * Récupère TOUS les créneaux de la grille, tous programmes confondus.
    * Remplace l'ancien getAll(programmeId) qui filtrait par programme
    * et cassait l'affichage multi-émissions de GrilleBoard.
+   * 
+   * Fallback: si l'endpoint n'existe pas (404), retourne une liste vide
    */
-  getAllGrille: (): Promise<ApiResponse<ProgrammeGrille[]>> =>
-    get(`/admin/grille`),
+  getAllGrille: async (): Promise<ApiResponse<ProgrammeGrille[]>> => {
+    try {
+      return await get(`/admin/grille`);
+    } catch (error: any) {
+      // Si 404, retourner une réponse vide plutôt que de crasher
+      if (error?.response?.status === 404) {
+        console.warn('Route /admin/grille non trouvée (404) - retournant liste vide');
+        return { data: [] };
+      }
+      throw error;
+    }
+  },
 
   /**
    * Crée un nouveau créneau pour un programme

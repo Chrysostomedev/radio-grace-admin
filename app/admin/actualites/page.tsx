@@ -7,12 +7,14 @@ import ReusableForm, { FieldConfig } from "@/components/form/ReusableForm";
 import Paginate from "@/components/data/paginate";
 import { useRouter } from "next/navigation";
 import { useActualites } from "@/hooks/admin/useActualites";
+import { useCategorieActuQuery } from "@/hooks/admin/useCategorieActu";
 import { actualiteService } from "@/services/admin/actualite.service";
 import { toast } from "sonner";
 
 export default function ActualitesPage() {
   const router = useRouter();
   const { data, meta, loading, filters, setFilters, fetch } = useActualites();
+  const { data: categories = [] } = useCategorieActuQuery();
   const [searchLocal, setSearchLocal] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showForm, setShowForm] = useState(false);
@@ -74,10 +76,7 @@ export default function ActualitesPage() {
       label: "Catégorie",
       type: "select",
       required: true,
-      options: [
-        { label: "Diocèse", value: 2 },
-        { label: "Église", value: 1 },
-      ],
+      options: categories.map((c) => ({ label: c.name, value: c.id })),
     },
     {
       name: "statut",
@@ -206,7 +205,7 @@ export default function ActualitesPage() {
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {mapped.map((a: any) => (
-              <ActualiteCard key={a.id} actualite={a} />
+              <ActualiteCard key={a.id} actualite={a} onUpdate={() => fetch(meta.current_page)} />
             ))}
           </div>
         ) : (

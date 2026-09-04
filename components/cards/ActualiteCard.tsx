@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye, Heart, Share2, MessageCircle, Calendar, ArrowUpRight } from "lucide-react";
+import { Eye, Heart, Share2, MessageCircle, Calendar, ArrowUpRight, Edit2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { actualiteService } from "@/services/admin/actualite.service";
 
 export interface ActualiteSummary {
     id: number | string;
@@ -22,6 +25,7 @@ export interface ActualiteSummary {
 interface Props {
     actualite: ActualiteSummary;
     basePath?: string;
+    onUpdate?: () => void; // Callback pour rafraichir la liste
 }
 
 const CATEGORY_CFG: Record<string, { label: string; bg: string; text: string }> = {
@@ -60,8 +64,10 @@ function ProgressRing({ pct, color }: { pct: number; color: string }) {
     );
 }
 
-export default function ActualiteCard({ actualite, basePath = "/admin/actualites" }: Props) {
+export default function ActualiteCard({ actualite, basePath = "/admin/actualites", onUpdate }: Props) {
     const router = useRouter();
+    const [isDeleting, setIsDeleting] = useState(false);
+    
     const engagement =
         actualite.total > 0
             ? Math.round(((actualite.en_cours + actualite.terminees) / actualite.total) * 100)
@@ -70,6 +76,27 @@ export default function ActualiteCard({ actualite, basePath = "/admin/actualites
     const cat = CATEGORY_CFG[actualite.category] ?? CATEGORY_CFG.societe;
     const prio = PRIORITY_CFG[actualite.priority ?? "low"];
     const ringColor = pct >= 60 ? "#1E9D55" : pct >= 30 ? "#F0A93E" : "#163A2C";
+
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm("Êtes-vous sûr de vouloir supprimer cette actualité ?")) return;
+        
+        setIsDeleting(true);
+        try {
+            await actualiteService.delete(Number(actualite.id));
+            toast.success("Actualité supprimée");
+            onUpdate?.();
+        } catch (err: any) {
+            toast.error(err?.message || "Erreur suppression");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        router.push(`${basePath}/${actualite.id}`);
+    };
 
     return (
         <div
@@ -156,8 +183,25 @@ export default function ActualiteCard({ actualite, basePath = "/admin/actualites
                             style={{ width: `${pct}%`, backgroundColor: ringColor }}
                         />
                     </div>
-                    <div className="ml-1 flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-bold text-[#F0A93E] transition group-hover:text-[#163A2C]">
-                        Lire <ArrowUpRight size={14} />
+                    <div className="ml-1 flex shrink-0 items-center gap-2">
+                        <button
+                            onClick={handleEdit}
+                            className="p-1.5 rounded-lg hover:bg-[#F0A93E]/20 text-[#F0A93E] transition"
+                            title="Éditer"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition disabled:opacity-50"
+                            title="Supprimer"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                        <div className="whitespace-nowrap text-xs font-bold text-[#F0A93E] transition group-hover:text-[#163A2C] ml-1">
+                            Lire <ArrowUpRight size={14} className="inline" />
+                        </div>
                     </div>
                 </div>
             </div>

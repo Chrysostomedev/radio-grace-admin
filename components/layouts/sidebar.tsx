@@ -4,15 +4,12 @@ import { usePathname } from "next/navigation";
 import { useState, createContext, useContext, useCallback } from "react";
 import {
   LayoutDashboard, ListMusic, CalendarDays, ShoppingBag, HeartHandshake, Users, Settings, LogOut,
-  ChevronLeft, ChevronRight, ChevronDown, AlertTriangle, X, Newspaper, RadioTower, Radio,
-  Music2Icon,
+  ChevronLeft, ChevronRight, ChevronDown, AlertTriangle, X, Newspaper, RadioTower,
   HandCoins,
-  User2,
   CalendarClock,
   Podcast,
   Mic2,
-  UserRound,
-  UserRoundArrowLeft,
+  Image as ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -59,7 +56,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [ { label: "Tableau de bord",
      label: "Actualités",
      icon: Newspaper, href: "/admin/actualites" }, { 
       label: "Bannières Mobile",
-       icon: Image, href: "/admin/hero-mobile" }, {
+       icon: ImageIcon, href: "/admin/hero-mobile" }, {
         label: "Grille des programmes",
          icon: CalendarClock, href: "/admin/programmes/grille" }, { 
           label: "Émissions", icon: Mic2, href: "/admin/emissions" }, { 
@@ -68,8 +65,9 @@ const ADMIN_NAV_ITEMS: NavItem[] = [ { label: "Tableau de bord",
                 label: "Boutique", icon: ShoppingBag, href: "/admin/boutique" }, { 
                   label: "Intentions de prière", icon: HeartHandshake, href: "/admin/intentions" }, {
                      label: "Direct", icon: RadioTower, href: "/admin/direct" }, { 
-                    label: "Dons", icon: HandCoins, href: "/admin/dons" }, {
-                       label: "Animateurs", icon: UserRoundArrowLeft, href: "/admin/animateurs" }, {
+                    label: "Dons", icon: HandCoins, href: "/admin/dons" },
+{ label: "Auditeurs", icon: Users, href: "/admin/auditeurs" }, {
+                       label: "Animateurs", icon: Mic2, href: "/admin/animateurs" }, {
                          label: "Utilisateurs", icon: Users, href: "/admin/roles" }, ];
 
 const REDACTEUR_NAV_ITEMS: NavItem[] = [
@@ -80,7 +78,10 @@ const REDACTEUR_NAV_ITEMS: NavItem[] = [
   { label: "Demandes", icon: HeartHandshake, href: "/redacteur/demandes" },
 ];
 
-const BOTTOM_ITEMS = [{ label: "Paramètres", icon: Settings, href: "/parametres" }];
+const BOTTOM_ITEMS = [
+  { label: "Mon Profil", icon: Settings, href: "/profil" },
+  { label: "Paramètres", icon: Settings, href: "/parametres" }
+];
 
 // ── SubMenu interne — onglets contextuels ────────────────────────────────────
 function SubMenu({ label, href, icon, items, collapsed }: { label: string; href: string; icon: React.ReactNode; items: SubMenuItem[]; collapsed: boolean }) {

@@ -205,6 +205,7 @@ export default function GrillePage() {
                 setSelectedCreneau(creneau);
                 setShowEdit(true);
               }}
+              onRefresh={chargerCreneaux}
             />
           )}
         </div>

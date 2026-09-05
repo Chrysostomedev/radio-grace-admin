@@ -16,6 +16,7 @@ import { normalizePodcastStatut } from "@/types/admin";
 /* ── Option de programme telle que renvoyée par /admin/programmes ── */
 interface ProgrammeOption {
     id: number;
+    titre?: string;
     nom?: string;
     name?: string;
 }
@@ -330,11 +331,12 @@ export default function PodcastsPage() {
                         duree: editing.duree ?? undefined,
                         is_premium: editing.is_premium,
                         video_link: editing.video_url?.startsWith("http") ? editing.video_url : "",
+                        image_url: editing.image || "",
                         statut: ((editing.statut ?? "BROUILLON").toUpperCase() as "BROUILLON" | "PUBLIE" | "ARCHIVE"),
                     } : {}}
                     programmes={programmes.map((p) => ({
                         id: p.id.toString(),
-                        name: p.nom || p.name || `Programme ${p.id}`,
+                        name: p.titre || p.nom || p.name || `Programme ${p.id}`,
                     }))}
                     onSubmit={handleSubmit}
                     onClose={closeForm}

@@ -6,7 +6,7 @@ export interface Actualite {
   titre: string;
   slug: string;
   contenu?: string;
-  categorie: { id: number; nom: string; slug?: string } | null;
+  categorie: { id: number; name: string; slug?: string } | null;
   categorie_id: number;
   statut: "BROUILLON" | "EN_COURS" | "PUBLIE" | "RETARD";
   image: string | null;

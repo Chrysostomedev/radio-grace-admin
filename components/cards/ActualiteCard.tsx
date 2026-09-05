@@ -26,6 +26,7 @@ interface Props {
     actualite: ActualiteSummary;
     basePath?: string;
     onUpdate?: () => void; // Callback pour rafraichir la liste
+    onEdit?: (actualite: any) => void; // Callback pour ouvrir le modal d'édition
 }
 
 const CATEGORY_CFG: Record<string, { label: string; bg: string; text: string }> = {
@@ -64,8 +65,7 @@ function ProgressRing({ pct, color }: { pct: number; color: string }) {
     );
 }
 
-export default function ActualiteCard({ actualite, basePath = "/admin/actualites", onUpdate }: Props) {
-    const router = useRouter();
+export default function ActualiteCard({ actualite, basePath = "/admin/actualites", onUpdate, onEdit }: Props) {
     const [isDeleting, setIsDeleting] = useState(false);
     
     const engagement =
@@ -95,12 +95,13 @@ export default function ActualiteCard({ actualite, basePath = "/admin/actualites
 
     const handleEdit = (e: React.MouseEvent) => {
         e.stopPropagation();
-        router.push(`${basePath}/${actualite.id}`);
+        if (onEdit) {
+            onEdit(actualite);
+        }
     };
 
     return (
         <div
-            onClick={() => router.push(actualite.href ?? `${basePath}/${actualite.id}`)}
             className="group flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-[#163A2C]/10 bg-white shadow-sm ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(22,58,44,0.14)]"
         >
             {/* Bandeau image */}

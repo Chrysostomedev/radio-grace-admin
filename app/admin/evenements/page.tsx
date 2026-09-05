@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import StatsCard from "@/components/cards/StatsCard";
 import ReusableForm from "@/components/form/ReusableForm";
 import MainCard from "@/components/cards/MainCard";
 import ParticipantsModal from "@/components/modals/ParticipantsModal";
-import { Filter, Plus, X, Users } from "lucide-react";
+import { Filter, Plus, X, Users, Trash2 } from "lucide-react";
 import type { FieldConfig } from "@/components/form/ReusableForm";
 import { useEvenements } from "@/hooks/admin/useEvenements";
 import { useAdminParticipants } from "@/hooks/useAdminParticipants";
@@ -64,22 +65,29 @@ export default function AdminEvenementsPage() {
     setShowParticipantsModal(true);
   };
 
-  const eventFields: FieldConfig[] = [
+  const eventFields: FieldConfig[] = useMemo(() => {
+    const animateurOptions = Array.isArray(personnel) && personnel.length > 0
+      ? personnel.map(p => ({ label: p.nom_complet || p.nom, value: String(p.id) }))
+      : [{ label: "Chargement...", value: "" }];
+
+    return [
     { name: "type", label: "Type d'événement RGE", type: "select", required: true, options: TYPE_OPTIONS.filter(t=>t.id!=="all").map(t=>({ label: t.name, value: t.id })) },
     { name: "titre", label: "Thème / Titre", type: "text", required: true, gridSpan: 2 },
     { name: "date_debut", label: "Date début", type: "date", required: true },
     { name: "date_fin", label: "Date fin", type: "date", required: true },
     { name: "lieu", label: "Lieu", type: "text", required: true },
-    { name: "responsable_id", label: "Responsable / Animateur", type: "select", required: false, options: personnel.map(p => ({ label: p.nom_complet || p.nom, value: p.id })) },
-    { name: "description", label: "Description", type: "textarea", gridSpan: 2 },
-  ];
+    { name: "responsable_id", label: "Responsable / Animateur", type: "select", required: false, options: animateurOptions },
+      { name: "image", label: "Image de l'événement", type: "image-upload", required: false, maxImages: 1, maxSizeMB: 5 },
+      { name: "description", label: "Description", type: "textarea", gridSpan: 2 },
+    ];
+    }, [personnel]);
 
-  // Map vers MainCard.plannings
-  const planningsForCalendar = filtered.map((e:any) => ({
-    id: e.id,
-    codification: e.titre || e.theme,
-    date_debut: e.date_debut,
-    date_fin: e.date_fin,
+    // Map vers MainCard.plannings
+    const planningsForCalendar = filtered.map((e:any) => ({
+      id: e.id,
+      codification: e.titre || e.theme,
+      date_debut: e.date_debut,
+      date_fin: e.date_fin,
     status: e.statut || "EN_COURS",
     provider_id: e.responsable?.id ?? 0,
     site_id: 1,
@@ -92,31 +100,106 @@ export default function AdminEvenementsPage() {
   }));
 
   const handleCreate = async (data: Record<string, any>) => {
-    await create(data);
+    const fd = new FormData();
+    fd.append("type", data.type);
+    fd.append("titre", data.titre);
+    fd.append("date_debut", data.date_debut);
+    fd.append("date_fin", data.date_fin);
+    fd.append("lieu", data.lieu);
+    if (data.responsable_id) fd.append("responsable_id", data.responsable_id);
+    if (data.description) fd.append("description", data.description);
+    
+    // Handle image
+    const img = data.image;
+    if (Array.isArray(img) && img.length > 0) {
+      const file = img[0] instanceof File ? img[0] : img[0]?.file;
+      if (file) fd.append("image", file);
+    } else if (img instanceof File) {
+      fd.append("image", img);
+    }
+    
+    await create(fd);
     await refresh();
-    setShowCreate(false); setFormInitValues({});
+    setShowCreate(false);
+    setFormInitValues({});
   };
 
   const handleUpdate = async (data: Record<string, any>) => {
     if (!selectedEvent) return;
-    await update(selectedEvent.id, data);
+    
+    const fd = new FormData();
+    fd.append("type", data.type);
+    fd.append("titre", data.titre);
+    fd.append("date_debut", data.date_debut);
+    fd.append("date_fin", data.date_fin);
+    fd.append("lieu", data.lieu);
+    if (data.responsable_id) fd.append("responsable_id", data.responsable_id);
+    if (data.description) fd.append("description", data.description);
+    
+    // Handle image
+    const img = data.image;
+    if (Array.isArray(img) && img.length > 0) {
+      const file = img[0] instanceof File ? img[0] : img[0]?.file;
+      if (file) fd.append("image", file);
+    } else if (img instanceof File) {
+      fd.append("image", img);
+    }
+    
+    await update(selectedEvent.id, fd);
     await refresh();
-    setShowEdit(false); setSelectedEvent(null);
+    setShowEdit(false);
+    setSelectedEvent(null);
   };
 
   const handleDelete = async () => {
     if (!selectedEvent) return;
-    await remove(selectedEvent.id);
-    await refresh();
-    setSelectedEvent(null);
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
+    try {
+      await remove(selectedEvent.id);
+      await refresh();
+      setSelectedEvent(null);
+      setShowEdit(false);
+      toast.success("Événement supprimé");
+    } catch (e: any) {
+      toast.error("Erreur suppression");
+    }
   };
 
   const typeOptions = TYPE_OPTIONS.map(t => ({ label: t.name, value: String(t.id) }));
 
   return (
     <>
-      <ReusableForm isOpen={showCreate} onClose={()=>{ setShowCreate(false); setFormInitValues({}); }} title="Nouvel événement RGE" subtitle="Programmez un événement Radio Grâce-Espoir" fields={eventFields} onSubmit={handleCreate} submitLabel="Créer" initialValues={formInitValues} />
-      <ReusableForm isOpen={showEdit} onClose={()=>{ setShowEdit(false); setSelectedEvent(null); }} title="Modifier l'événement RGE" subtitle="Mettez à jour les détails de l'événement" fields={eventFields} onSubmit={handleUpdate} submitLabel="Mettre à jour" initialValues={selectedEvent? { ...selectedEvent, responsable_id: selectedEvent.responsable?.id } : {}} />
+      <ReusableForm isOpen={showCreate} onClose={()=>{ setShowCreate(false); setFormInitValues({}); }} title="Nouvel événement RGE" subtitle="Programmez un événement Radio Grâce-Espoir" fields={eventFields} onSubmit={handleCreate} submitLabel="Créer" initialValues={formInitValues && Object.keys(formInitValues).length > 0 ? {
+        type: String(formInitValues.type || ""),
+        titre: formInitValues.titre || "",
+        date_debut: formInitValues.date_debut || "",
+        date_fin: formInitValues.date_fin || "",
+        lieu: formInitValues.lieu || "",
+        responsable_id: formInitValues.responsable_id ? String(formInitValues.responsable_id) : "",
+        description: formInitValues.description || "",
+      } : {}} />
+      <ReusableForm isOpen={showEdit} onClose={()=>{ setShowEdit(false); setSelectedEvent(null); }} title="Modifier l'événement RGE" subtitle="Mettez à jour les détails de l'événement" fields={eventFields} onSubmit={handleUpdate} submitLabel="Mettre à jour" initialValues={selectedEvent ? { 
+        type: String(selectedEvent.type || ""),
+        titre: selectedEvent.titre || "",
+        date_debut: selectedEvent.date_debut ? selectedEvent.date_debut.split('T')[0] : "",
+        date_fin: selectedEvent.date_fin ? selectedEvent.date_fin.split('T')[0] : "",
+        lieu: selectedEvent.lieu || "",
+        responsable_id: selectedEvent.responsable?.id ? String(selectedEvent.responsable.id) : "",
+        description: selectedEvent.description || "",
+        image: selectedEvent.image ? [{ preview: selectedEvent.image }] : undefined,
+      } : {}} />
+      
+      {showEdit && selectedEvent && (
+        <div className="fixed bottom-6 right-6 z-40 flex gap-3">
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition flex items-center gap-2"
+          >
+            <Trash2 size={16} /> Supprimer
+          </button>
+        </div>
+      )}
+      
       <ParticipantsModal
         isOpen={showParticipantsModal}
         onClose={() => {
@@ -161,8 +244,8 @@ export default function AdminEvenementsPage() {
         <MainCard
           plannings={planningsForCalendar}
           isLoading={loading}
-          selectedEvent={selectedEvent || undefined}
-          isPanelOpen={showEdit}
+          selectedEvent={null}
+          isPanelOpen={false}
           onEventClick={(e: any)=> router.push(`/admin/evenements/${e.id}`)}
           onPanelClose={()=>{}}
           onEventDrop={async()=>{}}

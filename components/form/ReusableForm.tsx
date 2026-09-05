@@ -128,7 +128,7 @@ export default function ReusableForm({
                       <MediaPreview file={customValues[field.name] as File} url={getDefault(field)} type={field.previewType || "auto"} />
                     </div>
                   ) : field.type === "select"? (
-                    <Select name={field.name} required={field.required} disabled={field.disabled} icon={field.icon} value={String(customValues[field.name] ?? getDefault(field) ?? "")} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCustomChange(field.name, e.target.value)}>
+                    <Select name={field.name} required={field.required} disabled={field.disabled} icon={field.icon} defaultValue={String(getDefault(field) ?? "")} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCustomChange(field.name, e.target.value)}>
                       <option value="">Cliquez pour sélectionner</option>
                       {field.options?.map((opt, index) => (<option key={`opt-${index}-${opt.value}`} value={opt.value}>{opt.label}</option>))}
                     </Select>

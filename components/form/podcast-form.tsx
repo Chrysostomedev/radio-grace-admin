@@ -23,7 +23,7 @@ const podcastSchema = z.object({
 type PodcastFormData = z.infer<typeof podcastSchema>;
 
 interface Props {
-  initialData?: Partial<PodcastFormData> & { video_link?: string };
+  initialData?: Partial<PodcastFormData> & { video_link?: string; image_url?: string };
   programmes?: Array<{ id: string; name: string }>;
   onSubmit: (data: FormData) => Promise<void>;
   onClose: () => void;
@@ -60,6 +60,7 @@ export default function PodcastForm({
   // Fichiers (hors react-hook-form, gérés manuellement)
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [existingImage, setExistingImage] = useState<string | null>(initialData?.image_url || null);
 
   const {
     control,
@@ -136,10 +137,16 @@ export default function PodcastForm({
                   {...field}
                   className="w-full rounded-lg border border-[#163A2C]/10 bg-white px-4 py-2.5 focus:border-[#F0A93E] focus:outline-none focus:ring-1 focus:ring-[#F0A93E]/20"
                 >
-                  <option value="">Sélectionner...</option>
-                  {programmes.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
+                  <option value="">Sélectionner un programme...</option>
+                  {programmes && programmes.length > 0 ? (
+                    programmes.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name || `Programme ${p.id}`}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>Aucun programme disponible</option>
+                  )}
                 </select>
               )}
             />
@@ -213,16 +220,27 @@ export default function PodcastForm({
               <label className="block text-sm font-semibold text-[#0E241C] mb-2">
                 <span className="inline-flex items-center gap-1.5"><ImageIcon size={14} /> Image de couverture</span>
               </label>
+              {existingImage && !imageFile && (
+                <div className="mb-3 rounded-lg overflow-hidden border border-[#163A2C]/10">
+                  <img src={existingImage} alt="Image actuelle" className="h-24 w-full object-cover" />
+                  <p className="text-xs text-[#163A2C]/60 p-2">Image actuelle</p>
+                </div>
+              )}
               <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-[#163A2C]/20 bg-white px-4 py-3 hover:border-[#F0A93E] transition">
                 <Upload size={16} className="text-[#163A2C]/40" />
                 <span className="text-sm text-[#163A2C]/60 truncate">
-                  {imageFile ? imageFile.name : "Choisir une image..."}
+                  {imageFile ? imageFile.name : "Choisir une nouvelle image..."}
                 </span>
                 <input
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) => {
+                    setImageFile(e.target.files?.[0] ?? null);
+                    if (e.target.files?.[0]) {
+                      setExistingImage(null); // Masquer l'ancienne image si nouvelle sélectionnée
+                    }
+                  }}
                 />
               </label>
             </div>

@@ -106,8 +106,8 @@ intervenants: p.animateur? [{ id: p.animateur.id, name: p.animateur.nom_scene ||
               </div>
             </div>
             <div className="space-y-3 pt-2">
-              {data.audience_par_tranche.map((t: any) => (
-                <div key={t.label} className="flex items-center justify-between">
+              {data.audience_par_tranche.map((t: any, idx: number) => (
+                <div key={`${t.label}-${idx}`} className="flex items-center justify-between">
                   <span className="text- font-semibold text-[#163A2C]/70 w-20">{t.label}</span>
                   <div className="flex-1 mx-3"><MiniBar value={t.done} max={t.total} /></div>
                   <span className="text- font-black text-[#163A2C] w-12 text-right">{t.done}</span>

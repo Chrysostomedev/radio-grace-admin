@@ -25,7 +25,7 @@ interface Actualite {
   partages?: number;
   commentaires_count?: number;
   created_at: string;
-  categorie?: { nom: string } | null;
+  categorie?: { name: string } | null;
 }
 
 interface Props {
@@ -133,9 +133,9 @@ export default function ActualiteDetailCard({ actualite, onEdit, onDelete }: Pro
             </span>
           )}
 
-          {actualite.categorie?.nom && (
+          {actualite.categorie?.name && (
             <span className="text-[10px] font-black text-[#163A2C] bg-[#FBF6EA] px-2.5 py-1 rounded-full border border-[#163A2C]/10">
-              {actualite.categorie.nom}
+              {actualite.categorie.name}
             </span>
           )}
         </div>

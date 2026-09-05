@@ -162,10 +162,10 @@ export default function Navbar() {
 
         {/* Droite */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#163A2C]/[0.04] text-[#163A2C]/70 text-xs font-bold">
+          {/* <div className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#163A2C]/[0.04] text-[#163A2C]/70 text-xs font-bold">
             <Radio size={14} className="text-[#F0A93E]" />
             En direct
-          </div>
+          </div> */}
 
           <button
             onClick={() => setNotifPanelOpen(true)}

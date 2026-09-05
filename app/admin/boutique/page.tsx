@@ -79,7 +79,7 @@ export default function BoutiquePage() {
                 stock: p.stock,
                 note: 5,
                 ventes: p.ventes_count||0,
-                image: p.image_principale?.url? (p.image_principale.url.startsWith("http")? p.image_principale.url : `/storage/${p.image_principale.url}`.replace("//storage","/storage")) : p.images?.[0]?.url? (p.images[0].url.startsWith("http")? p.images[0].url : `${process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1","")}/storage/${p.images[0].url}`) : "/images/radio4.jpg",
+                image: p.image_principale?.url? (p.image_principale.url.startsWith("http")? p.image_principale.url : `/storage/${p.image_principale.url}`.replace("//storage","/storage")) : p.images?.[0]?.url? (p.images[0].url.startsWith("http")? p.images[0].url : `${process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1","")}/storage/${p.images[0].url}`) : "/images/radio4.png",
                 badge: p.badge?.toLowerCase(),
                 on_time: p.dispo_percent,
               };

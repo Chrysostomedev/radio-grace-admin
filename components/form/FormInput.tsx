@@ -94,7 +94,7 @@ export function Select({
 }) {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
-    const [selectedValue, setSelectedValue] = useState(value?? defaultValue?? "");
+    const [selectedValue, setSelectedValue] = useState(value ?? defaultValue ?? "");
     const [selectedLabel, setSelectedLabel] = useState("");
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -102,10 +102,10 @@ export function Select({
     const options = useMemo(() => {
         const opts: { value: string; label: string }[] = [];
         React.Children.forEach(children, (child: any) => {
-            if (child?.type === 'option') {
+            if (child?.type === 'option' && child.props.value) {
                 opts.push({
-                    value: child.props.value?? "",
-                    label: child.props.children?? ""
+                    value: child.props.value,
+                    label: child.props.children ?? ""
                 });
             }
         });
@@ -115,7 +115,7 @@ export function Select({
     // Set le label initial
     useEffect(() => {
         const opt = options.find(o => o.value === selectedValue);
-        setSelectedLabel(opt?.label?? placeholder);
+        setSelectedLabel(opt?.label ?? placeholder);
     }, [selectedValue, options, placeholder]);
 
     // Fermer au clic dehors
@@ -129,6 +129,13 @@ export function Select({
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    // Synchroniser selectedValue avec value prop
+    useEffect(() => {
+        if (value !== undefined && value !== selectedValue) {
+            setSelectedValue(value);
+        }
+    }, [value]);
 
     const filteredOptions = options.filter(opt =>
         opt.label.toLowerCase().includes(search.toLowerCase())
@@ -206,11 +213,11 @@ export function Select({
                                 Aucun résultat
                             </div>
                         ) : (
-                            filteredOptions.map((opt) => {
+                            filteredOptions.map((opt, idx) => {
                                 const isSelected = opt.value === selectedValue;
                                 return (
                                     <button
-                                        key={opt.value}
+                                        key={`${opt.value}-${idx}`}
                                         type="button"
                                         onClick={() => handleSelect(opt.value, opt.label)}
                                         className={`w-full px-3 py-2.5 text-left text- font-medium transition-colors flex items-center justify-between gap-2 ${

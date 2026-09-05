@@ -14,6 +14,8 @@ interface CreateCreneuPayload {
 }
 
 interface UpdateCreneuPayload extends Partial<CreateCreneuPayload> {
+  programme_id?: number;
+  jour?: string;
   heure_debut?: string;
   heure_fin?: string;
   is_rediffusion?: boolean;

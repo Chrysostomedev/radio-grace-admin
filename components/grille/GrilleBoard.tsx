@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ProgrammeGrille, Programme } from "@/types/admin";
+import { useGrilleActions } from "@/hooks/admin/useGrilleActions";
 
 interface GrilleBoardProps {
   jours: string[];
@@ -10,6 +11,7 @@ interface GrilleBoardProps {
   weekStart: Date;
   onDropSlot: (jour: string, heure: string, programme: any) => void;
   onCreneuClick: (creneau: ProgrammeGrille) => void;
+  onRefresh?: () => void; // Callback pour rafraîchir la grille après une action
 }
 
 const HEURES = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
@@ -66,8 +68,10 @@ export default function GrilleBoard({
   weekStart,
   onDropSlot,
   onCreneuClick,
+  onRefresh,
 }: GrilleBoardProps) {
   const [dragover, setDragover] = useState<string | null>(null);
+  const { moveCreneauBefore, moveCreneauAfter, deleteCreneau } = useGrilleActions();
 
   // Sécurise contre programmes undefined pendant le chargement
   const safeProgrammes = programmes ?? [];
@@ -190,19 +194,64 @@ export default function GrilleBoard({
                   {creneau && programme && isFirstHour ? (
                     <button
                       onClick={() => onCreneuClick(creneau)}
-                      className="group relative w-full h-full flex flex-col items-center justify-start p-2 rounded-lg bg-gradient-to-br from-[#F0A93E]/30 to-[#F0A93E]/10 border border-[#F0A93E]/40 hover:border-[#F0A93E] hover:shadow-md transition-all"
+                      className="group relative w-full h-full flex flex-col items-center justify-start p-2 rounded-lg bg-gradient-to-br from-[#F0A93E]/30 to-[#F0A93E]/10 border border-[#F0A93E]/40 hover:border-[#F0A93E] hover:shadow-md transition-all overflow-hidden"
                       title={`${programme.titre} - ${creneau.heure_debut} à ${creneau.heure_fin}`}
                     >
+                      {/* Boutons d'action en fond (apparaissent au survol) */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-b from-[#163A2C]/95 to-[#163A2C]/90 flex flex-col gap-1 p-1 rounded-lg z-10">
+                        {/* Ligne 1: Déplacer avant / après */}
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Déplacer 1h avant
+                              moveCreneauBefore(creneau, onRefresh);
+                            }}
+                            className="flex-1 h-6 bg-blue-500 hover:bg-blue-600 rounded text-white text-[9px] font-bold flex items-center justify-center transition"
+                            title="Déplacer 1h avant"
+                          >
+                            ◀ 1h
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Déplacer 1h après
+                              moveCreneauAfter(creneau, onRefresh);
+                            }}
+                            className="flex-1 h-6 bg-blue-500 hover:bg-blue-600 rounded text-white text-[9px] font-bold flex items-center justify-center transition"
+                            title="Déplacer 1h après"
+                          >
+                            1h ▶
+                          </button>
+                        </div>
+                        
+                        {/* Ligne 2: Supprimer */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Supprimer "${programme.titre}" ?`)) {
+                              // Appeler la suppression via le hook
+                              deleteCreneau(creneau, onRefresh);
+                            }
+                          }}
+                          className="w-full h-6 bg-red-500 hover:bg-red-600 rounded text-white text-[9px] font-bold flex items-center justify-center transition"
+                          title="Supprimer ce créneau"
+                        >
+                          🗑️ Supprimer
+                        </button>
+                      </div>
+
+                      {/* Contenu normal (visible par défaut) */}
                       {/* Image en haut */}
                       <div
-                        className="w-10 h-10 rounded-full shadow-sm border border-[#F0A93E] overflow-hidden bg-cover bg-center flex-shrink-0"
+                        className="w-10 h-10 rounded-full shadow-sm border border-[#F0A93E] overflow-hidden bg-cover bg-center flex-shrink-0 group-hover:opacity-30 transition-opacity"
                         style={{
                           backgroundImage: programme.image ? `url(${programme.image})` : `url('/images/emission-default.jpg')`,
                         }}
                       />
 
                       {/* Texte : titre + heure + durée */}
-                      <div className="mt-1 text-center w-full min-w-0">
+                      <div className="mt-1 text-center w-full min-w-0 group-hover:opacity-30 transition-opacity">
                         <p className="text-[11px] font-bold text-[#163A2C] truncate line-clamp-2">
                           {programme.titre}
                         </p>
@@ -213,7 +262,7 @@ export default function GrilleBoard({
 
                       {/* Badge rediffusion */}
                       {creneau.is_rediffusion && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#F0A93E] rounded-full flex items-center justify-center text-[9px] text-white font-bold shadow-md">
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#F0A93E] rounded-full flex items-center justify-center text-[9px] text-white font-bold shadow-md group-hover:opacity-30 transition-opacity">
                           R
                         </div>
                       )}

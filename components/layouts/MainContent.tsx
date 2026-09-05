@@ -5,13 +5,15 @@ import { useSidebar, SIDEBAR_WIDTH_EXPANDED, SIDEBAR_WIDTH_COLLAPSED, NAVBAR_HEI
 export default function MainContent({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
   const sidebarOffset = collapsed? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED;
+  // NAVBAR_HEIGHT (76px) + Site tabs height (~44px for py-2.5 + border)
+  const totalTopPadding = NAVBAR_HEIGHT + 44;
 
   return (
     <div
       style={
         {
           "--sidebar-offset": `${sidebarOffset}px`,
-          paddingTop: NAVBAR_HEIGHT,
+          paddingTop: `${totalTopPadding}px`,
         } as React.CSSProperties
       }
       className="min-h-screen bg-[#FBF6EA]/40 md:ml-[var(--sidebar-offset)] transition-[margin-left] duration-300 ease-in-out"

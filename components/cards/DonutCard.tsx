@@ -114,7 +114,7 @@ export default function DonutCard({
                                 {seg.label}
                             </span>
                             <span className="text-[11px] text-slate-400 font-semibold shrink-0 tabular-nums">
-                                {seg.done}/{seg.total} Horaires
+                                {seg.done}/{seg.total} 
                             </span>
                         </div>
                     ))}

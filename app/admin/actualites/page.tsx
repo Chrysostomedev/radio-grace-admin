@@ -5,19 +5,18 @@ import { Plus, Search, LayoutGrid, List } from "lucide-react";
 import ActualiteCard from "@/components/cards/ActualiteCard";
 import ReusableForm, { FieldConfig } from "@/components/form/ReusableForm";
 import Paginate from "@/components/data/paginate";
-import { useRouter } from "next/navigation";
 import { useActualites } from "@/hooks/admin/useActualites";
 import { useCategorieActuQuery } from "@/hooks/admin/useCategorieActu";
 import { actualiteService } from "@/services/admin/actualite.service";
 import { toast } from "sonner";
 
 export default function ActualitesPage() {
-  const router = useRouter();
   const { data, meta, loading, filters, setFilters, fetch } = useActualites();
   const { data: categories = [] } = useCategorieActuQuery();
   const [searchLocal, setSearchLocal] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showForm, setShowForm] = useState(false);
+  const [editingActualite, setEditingActualite] = useState<any | null>(null);
 
   // Mapping propre + gestion correcte de l'URL image
   const mapped = useMemo(
@@ -69,14 +68,19 @@ export default function ActualitesPage() {
 
   const handleSearch = () => setFilters({ ...filters, search: searchLocal });
 
-  const FIELDS: FieldConfig[] = [
+  const FIELDS: FieldConfig[] = useMemo(() => {
+    const categoryOptions = Array.isArray(categories) && categories.length > 0 
+      ? categories.map((c: any) => ({ label: c.name || c.titre, value: String(c.id) }))
+      : [{ label: "Chargement...", value: "loading" }];
+
+    return [
     { name: "titre", label: "Titre actualité", type: "text", required: true },
     {
       name: "categorie_id",
       label: "Catégorie",
       type: "select",
       required: true,
-      options: categories.map((c) => ({ label: c.name, value: c.id })),
+      options: categoryOptions,
     },
     {
       name: "statut",
@@ -116,6 +120,7 @@ export default function ActualitesPage() {
       gridSpan: 2,
     },
   ];
+  }, [categories]);
 
   return (
     <>
@@ -151,6 +156,82 @@ export default function ActualitesPage() {
           }
         }}
         submitLabel="Publier l'actualité"
+      />
+
+      <ReusableForm
+        isOpen={showForm && !editingActualite}
+        onClose={() => setShowForm(false)}
+        title="Nouvelle actualité RGE"
+        subtitle="Publiez une actualité pour le site et l'app"
+        fields={FIELDS}
+        onSubmit={async (d: any) => {
+          const fd = new FormData();
+          fd.append("titre", d.titre);
+          fd.append("categorie_id", String(d.categorie_id));
+          fd.append("statut", d.statut);
+          fd.append("importance", d.importance);
+          fd.append("contenu", d.contenu);
+
+          const img = d.image;
+          if (Array.isArray(img) && img.length > 0) {
+            const file = img[0] instanceof File ? img[0] : img[0]?.file;
+            if (file) fd.append("image", file);
+          } else if (img instanceof File) {
+            fd.append("image", img);
+          }
+
+          try {
+            await actualiteService.create(fd);
+            toast.success("Actualité créée");
+            setShowForm(false);
+            fetch(1);
+          } catch (e: any) {
+            toast.error(e?.errorMessage || "Erreur");
+          }
+        }}
+        submitLabel="Publier l'actualité"
+      />
+
+      <ReusableForm
+        isOpen={!!editingActualite}
+        onClose={() => setEditingActualite(null)}
+        title="Modifier l'actualité RGE"
+        subtitle="Mettez à jour cette actualité"
+        fields={FIELDS}
+        initialValues={editingActualite ? {
+          titre: editingActualite.titre || "",
+          categorie_id: String(editingActualite.categorie_id || ""),
+          statut: editingActualite.statut || "BROUILLON",
+          importance: editingActualite.importance || "STANDARD",
+          contenu: editingActualite.contenu || "",
+          image: editingActualite.image ? [{ preview: editingActualite.image }] : undefined,
+        } : {}}
+        onSubmit={async (d: any) => {
+          const fd = new FormData();
+          fd.append("titre", d.titre || "");
+          fd.append("categorie_id", String(d.categorie_id || ""));
+          fd.append("statut", d.statut || "BROUILLON");
+          fd.append("importance", d.importance || "STANDARD");
+          fd.append("contenu", d.contenu || "");
+
+          const img = d.image;
+          if (Array.isArray(img) && img.length > 0) {
+            const file = img[0] instanceof File ? img[0] : img[0]?.file;
+            if (file) fd.append("image", file);
+          } else if (img instanceof File) {
+            fd.append("image", img);
+          }
+
+          try {
+            await actualiteService.update(editingActualite.id, fd);
+            toast.success("Actualité mise à jour");
+            setEditingActualite(null);
+            fetch(meta.current_page);
+          } catch (e: any) {
+            toast.error(e?.errorMessage || "Erreur");
+          }
+        }}
+        submitLabel="Mettre à jour"
       />
 
       <div className="space-y-5">
@@ -204,8 +285,13 @@ export default function ActualitesPage() {
           </div>
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mapped.map((a: any) => (
-              <ActualiteCard key={a.id} actualite={a} onUpdate={() => fetch(meta.current_page)} />
+            {mapped.map((a: any, idx: number) => (
+              <ActualiteCard 
+                key={a.id} 
+                actualite={a} 
+                onUpdate={() => fetch(meta.current_page)}
+                onEdit={() => setEditingActualite(data[idx])}
+              />
             ))}
           </div>
         ) : (
@@ -222,7 +308,6 @@ export default function ActualitesPage() {
                 {mapped.map((a: any) => (
                   <tr
                     key={a.id}
-                    onClick={() => router.push(`/admin/actualites/${a.id}`)}
                     className="border-t hover:bg-[#FBF6EA]/50 cursor-pointer"
                   >
                     <td className="p-3 font-bold text-[#163A2C]">{a.name}</td>

@@ -47,16 +47,18 @@ export default function GrillePage() {
       setCreneaux(Array.isArray(data.data) ? data.data : []);
     } catch (err: any) {
       console.error("Erreur chargerCreneaux:", err);
-      toast.error(err.errorMessage || "Impossible de charger la grille", "Erreur");
+      if (toast) {
+        toast.error(err.errorMessage || "Impossible de charger la grille", "Erreur");
+      }
     } finally {
       setLoadingCreneaux(false);
     }
   }, [toast]);
 
-  // Un seul déclenchement, au montage. Ne dépend plus de selectedProgrammeId.
+  // Un seul déclenchement, au montage uniquement
   useEffect(() => {
     chargerCreneaux();
-  }, [chargerCreneaux]);
+  }, []);
 
   const handlePreviousWeek = () => setWeekStart(new Date(weekStart.getTime() - 7 * 24 * 60 * 60 * 1000));
   const handleNextWeek = () => setWeekStart(new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000));
@@ -78,14 +80,14 @@ export default function GrillePage() {
       };
 
       await programmeGrillesService.create(programme.id, payload);
-      toast.success("Créneau créé", "Succès");
+      toast.success("Programme créé", "Succès");
       chargerCreneaux();
     } catch (err: any) {
       console.error("Drop error:", err);
       const errorMsg = err.errors
         ? err.errors[Object.keys(err.errors)[0]]?.[0]
         : err.errorMessage;
-      toast.error(errorMsg || "Erreur lors de la création", "Conflit");
+      toast.error(errorMsg || "Erreur lors de la création", "Conflit avec autre programme");
     }
   };
 
@@ -93,7 +95,7 @@ export default function GrillePage() {
     if (!selectedCreneau) return;
     try {
       await programmeGrillesService.update(selectedCreneau.id, data);
-      toast.success("Créneau modifié", "Succès");
+      toast.success("Programme modifié", "Succès");
       chargerCreneaux();
       setShowEdit(false);
       setSelectedCreneau(null);
@@ -110,7 +112,7 @@ export default function GrillePage() {
     if (!selectedCreneau) return;
     try {
       await programmeGrillesService.delete(selectedCreneau.id);
-      toast.success("Créneau supprimé", "Succès");
+      toast.success("Programme supprimé", "Succès");
       chargerCreneaux();
       setShowDelete(false);
       setShowEdit(false);

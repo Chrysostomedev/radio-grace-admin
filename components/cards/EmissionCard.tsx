@@ -57,7 +57,7 @@ const isLive = (emission as any).en_direct_maintenant || (emission as any).en_di
 >
       {/* IMAGE / BANDEAU VISUEL */}
       <div className="relative h-64 w-full overflow-hidden">
-        // (supprime l'import "next/image")
+      
 {emission.image && !imgError && !emission.image.match(/\.(mp4|webm|ogg)$/i) ? (
   <img
     src={emission.image}

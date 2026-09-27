@@ -14,11 +14,10 @@ interface PubliciteModalProps {
 export default function PubliciteModal({ isOpen, onClose, publicite }: PubliciteModalProps) {
   const [formData, setFormData] = useState<any>({
     titre: "",
-    description: "",
-    lien_url: "",
-    position: "SIDEBAR",
-    ordre: 1,
-    actif: true,
+    video_url: "",
+    lien: "",
+    position: "PLAYER",
+    is_active: true,
     date_debut: "",
     date_fin: "",
   });
@@ -28,16 +27,29 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
 
   useEffect(() => {
     if (publicite) {
-      setFormData(publicite);
+      // Normaliser position: si elle n'est pas valide, mettre PLAYER par défaut
+      const validPositions = ["PLAYER", "BANNER", "INTERSTITIEL", "PARTENAIRE"];
+      const position = validPositions.includes(publicite.position || "") 
+        ? publicite.position 
+        : "PLAYER";
+      
+      setFormData({
+        titre: publicite.titre || "",
+        video_url: publicite.video_url || "",
+        lien: publicite.lien || "",
+        position,
+        is_active: publicite.is_active !== undefined ? publicite.is_active : true,
+        date_debut: publicite.date_debut || "",
+        date_fin: publicite.date_fin || "",
+      });
       setImagePreview(publicite.image || "");
     } else {
       setFormData({
         titre: "",
-        description: "",
-        lien_url: "",
-        position: "SIDEBAR",
-        ordre: 1,
-        actif: true,
+        video_url: "",
+        lien: "",
+        position: "PLAYER",
+        is_active: true,
         date_debut: "",
         date_fin: "",
       });
@@ -77,28 +89,49 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
     try {
       setLoading(true);
 
-      const payload = new FormData();
-      payload.append("titre", formData.titre);
-      payload.append("description", formData.description || "");
-      payload.append("lien_url", formData.lien_url || "");
-      payload.append("position", formData.position);
-      payload.append("ordre", formData.ordre);
-      payload.append("actif", formData.actif ? "1" : "0");
-      payload.append("date_debut", formData.date_debut || "");
-      payload.append("date_fin", formData.date_fin || "");
+      // Stratégie : si on modifie avec image, utiliser FormData
+      // Sinon, utiliser JSON (plus simple)
+      const isUpdating = !!publicite?.id;
+      const hasImageChange = !!imageFile;
 
-      if (imageFile) {
+      if (hasImageChange) {
+        // Avec fichier image : FormData
+        const payload = new FormData();
+        payload.append("titre", formData.titre);
+        payload.append("video_url", formData.video_url || "");
+        payload.append("lien", formData.lien || "");
+        payload.append("position", formData.position);
+        payload.append("is_active", formData.is_active ? "1" : "0");
+        payload.append("date_debut", formData.date_debut || "");
+        payload.append("date_fin", formData.date_fin || "");
         payload.append("image", imageFile);
-      }
 
-      if (publicite?.id) {
-        await publiciteService.update(publicite.id, payload);
-        toast.success("Publicité mise à jour");
+        if (isUpdating) {
+          payload.append("_method", "PUT");
+          await publiciteService.update(publicite.id, payload);
+        } else {
+          await publiciteService.create(payload);
+        }
       } else {
-        await publiciteService.create(payload);
-        toast.success("Publicité créée");
+        // Sans fichier : JSON
+        const payload = {
+          titre: formData.titre,
+          video_url: formData.video_url || null,
+          lien: formData.lien || null,
+          position: formData.position,
+          is_active: formData.is_active,
+          date_debut: formData.date_debut || null,
+          date_fin: formData.date_fin || null,
+        };
+
+        if (isUpdating) {
+          await publiciteService.update(publicite.id, payload);
+        } else {
+          await publiciteService.create(payload);
+        }
       }
 
+      toast.success(isUpdating ? "Publicité mise à jour" : "Publicité créée");
       onClose(true);
     } catch (error: any) {
       toast.error(error.message || "Erreur");
@@ -189,32 +222,30 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
               <p className="text-xs text-[#163A2C]/50 mt-1">{formData.titre.length}/150</p>
             </div>
 
-            {/* Description */}
+            {/* Description → Video URL */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Description (optionnel)
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Description"
-                maxLength={500}
-                rows={4}
-                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C] resize-none"
-              />
-              <p className="text-xs text-[#163A2C]/50 mt-1">{formData.description.length}/500</p>
-            </div>
-
-            {/* URL Lien */}
-            <div>
-              <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                URL de lien (optionnel)
+                Lien Vidéo (optionnel)
               </label>
               <input
                 type="url"
-                name="lien_url"
-                value={formData.lien_url}
+                name="video_url"
+                value={formData.video_url}
+                onChange={handleChange}
+                placeholder="https://youtube.com/..."
+                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
+              />
+            </div>
+
+            {/* URL Lien → Lien */}
+            <div>
+              <label className="block text-sm font-bold text-[#163A2C] mb-2">
+                URL de destination (optionnel)
+              </label>
+              <input
+                type="url"
+                name="lien"
+                value={formData.lien}
                 onChange={handleChange}
                 placeholder="https://..."
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
@@ -232,27 +263,14 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
               >
-                <option value="HEADER">En-tête</option>
-                <option value="SIDEBAR">Barre latérale</option>
-                <option value="FOOTER">Pied de page</option>
-                <option value="POPUP">Pop-up</option>
+                <option value="PLAYER">Lecteur</option>
+                <option value="BANNER">Bannière</option>
+                <option value="INTERSTITIEL">Interstitiel</option>
+                <option value="PARTENAIRE">Partenaire</option>
               </select>
             </div>
 
-            {/* Ordre */}
-            <div>
-              <label className="block text-sm font-bold text-[#163A2C] mb-2">
-                Ordre d'affichage
-              </label>
-              <input
-                type="number"
-                name="ordre"
-                value={formData.ordre}
-                onChange={handleChange}
-                min="1"
-                className="w-full px-4 py-3 border border-[#163A2C]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163A2C]"
-              />
-            </div>
+            {/* Ordre removed - not in DB */}
 
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
@@ -286,13 +304,13 @@ export default function PubliciteModal({ isOpen, onClose, publicite }: Publicite
             <div className="flex items-center gap-3 p-4 bg-[#163A2C]/5 rounded-xl">
               <input
                 type="checkbox"
-                name="actif"
-                checked={formData.actif || false}
+                name="is_active"
+                checked={formData.is_active || false}
                 onChange={handleChange}
-                id="actif"
+                id="is_active"
                 className="w-5 h-5 accent-[#163A2C]"
               />
-              <label htmlFor="actif" className="font-bold text-[#163A2C] cursor-pointer">
+              <label htmlFor="is_active" className="font-bold text-[#163A2C] cursor-pointer">
                 Activer cette publicité
               </label>
             </div>

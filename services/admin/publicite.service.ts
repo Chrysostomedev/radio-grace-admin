@@ -3,14 +3,14 @@ import { get, post, put, del } from "@/core/axios";
 export interface Publicite {
   id: number;
   titre: string;
-  description?: string;
   image?: string;
-  lien_url?: string;
+  video_url?: string;
+  lien?: string;
   position?: string;
-  ordre?: number;
-  actif?: boolean;
+  is_active?: boolean;
   date_debut?: string;
   date_fin?: string;
+  clics?: number;
   created_at?: string;
   updated_at?: string;
 }

@@ -38,16 +38,7 @@ export const programmeGrillesService = {
    * Fallback: si l'endpoint n'existe pas (404), retourne une liste vide
    */
   getAllGrille: async (): Promise<ApiResponse<ProgrammeGrille[]>> => {
-    try {
-      return await get(`/admin/grille`);
-    } catch (error: any) {
-      // Si 404, retourner une réponse vide plutôt que de crasher
-      if (error?.response?.status === 404) {
-        console.warn('Route /admin/grille non trouvée (404) - retournant liste vide');
-        return { data: [] };
-      }
-      throw error;
-    }
+    return await get(`/admin/grille`);
   },
 
   /**

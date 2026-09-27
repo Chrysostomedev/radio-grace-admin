@@ -74,7 +74,7 @@ export default function EmissionsPage() {
         : [], 
       placeholder: animateurs && animateurs.length === 0 ? "Chargement..." : "Choisir un animateur" 
     },
-    { name: "image", label: "MÉDIA - AFFICHE / AUDIO / VIDÉO", type: "media", accept: "image/*,audio/*,video/*", previewType: "auto", gridSpan: 2 },
+    { name: "image", label: "AFFICHE de couverture", type: "media", accept: "image/*,audio/*,video/*", previewType: "auto", gridSpan: 2 },
     { name: "description", label: "Description", type: "textarea", gridSpan: 2 },
   ];
 

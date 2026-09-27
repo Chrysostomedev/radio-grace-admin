@@ -156,12 +156,12 @@ export default function PublicitesPage() {
                 <div className="absolute top-2 right-2">
                   <span
                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
-                      publicite.actif
+                      publicite.is_active
                         ? "bg-[#1E9D55]/20 text-[#1E9D55]"
                         : "bg-[#163A2C]/20 text-[#163A2C]"
                     }`}
                   >
-                    {publicite.actif ? "✓ Actif" : "Inactif"}
+                    {publicite.is_active ? "✓ Actif" : "Inactif"}
                   </span>
                 </div>
               </div>
@@ -172,11 +172,6 @@ export default function PublicitesPage() {
                   <h3 className="font-black text-[#163A2C] line-clamp-2">
                     {publicite.titre}
                   </h3>
-                  {publicite.description && (
-                    <p className="text-sm text-[#163A2C]/60 line-clamp-2 mt-1">
-                      {publicite.description}
-                    </p>
-                  )}
                 </div>
 
                 {/* Meta info */}
@@ -184,8 +179,8 @@ export default function PublicitesPage() {
                   {publicite.position && (
                     <div>📍 Position: <span className="font-bold">{publicite.position}</span></div>
                   )}
-                  {publicite.ordre && (
-                    <div>📊 Ordre: <span className="font-bold">{publicite.ordre}</span></div>
+                  {publicite.clics !== undefined && (
+                    <div>👆 Clics: <span className="font-bold">{publicite.clics}</span></div>
                   )}
                   {(publicite.date_debut || publicite.date_fin) && (
                     <div>
@@ -195,14 +190,32 @@ export default function PublicitesPage() {
                   )}
                 </div>
 
-                {/* Link Preview */}
-                {publicite.lien_url && (
+                {/* Video URL */}
+                {publicite.video_url && (
                   <div className="bg-[#163A2C]/5 px-3 py-2 rounded-lg flex items-center justify-between gap-2">
                     <span className="text-xs text-[#163A2C]/70 truncate">
-                      🔗 {publicite.lien_url}
+                      🎥 {publicite.video_url}
                     </span>
                     <a
-                      href={publicite.lien_url}
+                      href={publicite.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 hover:bg-[#163A2C]/10 rounded transition"
+                      title="Ouvrir la vidéo"
+                    >
+                      <ExternalLink size={14} className="text-[#163A2C]" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Link Preview */}
+                {publicite.lien && (
+                  <div className="bg-[#163A2C]/5 px-3 py-2 rounded-lg flex items-center justify-between gap-2">
+                    <span className="text-xs text-[#163A2C]/70 truncate">
+                      🔗 {publicite.lien}
+                    </span>
+                    <a
+                      href={publicite.lien}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 hover:bg-[#163A2C]/10 rounded transition"
@@ -219,15 +232,15 @@ export default function PublicitesPage() {
                     onClick={() => handleToggle(publicite.id)}
                     disabled={togglingId === publicite.id}
                     className={`flex-1 py-2 px-3 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 ${
-                      publicite.actif
+                      publicite.is_active
                         ? "bg-[#1E9D55]/20 text-[#1E9D55] hover:bg-[#1E9D55]/30"
                         : "bg-[#163A2C]/10 text-[#163A2C]/70 hover:bg-[#163A2C]/20"
                     }`}
-                    title={publicite.actif ? "Désactiver" : "Activer"}
+                    title={publicite.is_active ? "Désactiver" : "Activer"}
                   >
                     {togglingId === publicite.id ? (
                       <Loader size={14} className="animate-spin" />
-                    ) : publicite.actif ? (
+                    ) : publicite.is_active ? (
                       <Eye size={14} />
                     ) : (
                       <EyeOff size={14} />

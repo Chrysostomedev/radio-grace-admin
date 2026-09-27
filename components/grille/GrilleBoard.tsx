@@ -192,9 +192,12 @@ export default function GrilleBoard({
                   onDrop={(e) => handleDrop(e, jour, heure)}
                 >
                   {creneau && programme && isFirstHour ? (
-                    <button
+                    <div
                       onClick={() => onCreneuClick(creneau)}
-                      className="group relative w-full h-full flex flex-col items-center justify-start p-2 rounded-lg bg-gradient-to-br from-[#F0A93E]/30 to-[#F0A93E]/10 border border-[#F0A93E]/40 hover:border-[#F0A93E] hover:shadow-md transition-all overflow-hidden"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && onCreneuClick(creneau)}
+                      className="group relative w-full h-full flex flex-col items-center justify-start p-2 rounded-lg bg-gradient-to-br from-[#F0A93E]/30 to-[#F0A93E]/10 border border-[#F0A93E]/40 hover:border-[#F0A93E] hover:shadow-md transition-all overflow-hidden cursor-pointer"
                       title={`${programme.titre} - ${creneau.heure_debut} à ${creneau.heure_fin}`}
                     >
                       {/* Boutons d'action en fond (apparaissent au survol) */}
@@ -266,7 +269,7 @@ export default function GrilleBoard({
                           R
                         </div>
                       )}
-                    </button>
+                    </div>
                   ) : !creneau && defaultProgramme ? (
                     // Case vide : affichage du programme par défaut ("L'Heure de Grâce")
                     <div

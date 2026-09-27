@@ -99,9 +99,7 @@ export default function MobilePreview({ session = null }: MobilePreviewProps) {
                                 <p className="text-[11px] font-black">
                                     L&apos;Évangile au cœur de l&apos;Homme
                                 </p>
-                                <p className="text-[10px] text-white/60 mt-1">
-                                    Écoutez en FM ou en streaming
-                                </p>
+                               
                             </div>
                         </div>
                     </div>

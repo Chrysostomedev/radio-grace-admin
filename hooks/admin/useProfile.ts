@@ -29,8 +29,24 @@ export function useProfile() {
       toast.success(response.message || 'Profil mis à jour avec succès');
     },
     onError: (error: any) => {
-      const errorMsg = error?.response?.data?.message || 'Erreur lors de la mise à jour du profil';
-      toast.error(errorMsg);
+      // Vérifier s'il y a des erreurs de validation détaillées
+      const errors = error?.response?.data?.errors;
+      if (errors && typeof errors === 'object') {
+        // Afficher toutes les erreurs de validation
+        Object.entries(errors).forEach(([field, messages]: [string, any]) => {
+          if (Array.isArray(messages)) {
+            messages.forEach((msg: string) => {
+              toast.error(msg);
+            });
+          } else {
+            toast.error(String(messages));
+          }
+        });
+      } else {
+        // Message d'erreur générique
+        const errorMsg = error?.response?.data?.message || 'Erreur lors de la mise à jour du profil';
+        toast.error(errorMsg);
+      }
     },
   });
 
@@ -41,8 +57,24 @@ export function useProfile() {
       toast.success(response.message || 'Mot de passe mis à jour avec succès');
     },
     onError: (error: any) => {
-      const errorMsg = error?.response?.data?.message || 'Erreur lors du changement de mot de passe';
-      toast.error(errorMsg);
+      // Vérifier s'il y a des erreurs de validation détaillées
+      const errors = error?.response?.data?.errors;
+      if (errors && typeof errors === 'object') {
+        // Afficher toutes les erreurs de validation
+        Object.entries(errors).forEach(([field, messages]: [string, any]) => {
+          if (Array.isArray(messages)) {
+            messages.forEach((msg: string) => {
+              toast.error(msg);
+            });
+          } else {
+            toast.error(String(messages));
+          }
+        });
+      } else {
+        // Message d'erreur générique
+        const errorMsg = error?.response?.data?.message || 'Erreur lors du changement de mot de passe';
+        toast.error(errorMsg);
+      }
     },
   });
 

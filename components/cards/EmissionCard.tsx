@@ -29,10 +29,11 @@ interface Props {
 
 // Palette de marque (Radio Grâce-Espoir) — un accent par catégorie de programme
 const CATEGORY_STYLES: Record<string, { gradient: string; badge: string; dot: string }> = {
-  acclamez: { gradient: "from-[#F0A93E] to-[#C97F1E]", badge: "bg-[#F0A93E] text-[#0E241C]", dot: "bg-[#F0A93E]" },
-  priere: { gradient: "from-[#1E5A3D] to-[#163A2C]", badge: "bg-[#1E5A3D] text-white", dot: "bg-[#1E5A3D]" },
-  jeunesse: { gradient: "from-[#1E9D55] to-[#163A2C]", badge: "bg-[#1E9D55] text-white", dot: "bg-[#1E9D55]" },
-  actualite: { gradient: "from-[#0E241C] to-[#163A2C]", badge: "bg-[#0E241C] text-white", dot: "bg-white/70" },
+  societe: { gradient: "from-[#163A2C] to-[#0E241C]", badge: "bg-[#163A2C] text-white", dot: "bg-[#163A2C]" },
+  priere_enseignement: { gradient: "from-[#1E5A3D] to-[#163A2C]", badge: "bg-[#1E5A3D] text-white", dot: "bg-[#1E5A3D]" },
+  divertissement: { gradient: "from-[#F0A93E] to-[#C97F1E]", badge: "bg-[#F0A93E] text-[#0E241C]", dot: "bg-[#F0A93E]" },
+  reportage: { gradient: "from-[#0E241C] to-[#163A2C]", badge: "bg-[#0E241C] text-white", dot: "bg-white/70" },
+  musique_louange: { gradient: "from-[#1E9D55] to-[#163A2C]", badge: "bg-[#1E9D55] text-white", dot: "bg-[#1E9D55]" },
   default: { gradient: "from-[#163A2C] to-[#0E241C]", badge: "bg-white/90 text-[#163A2C]", dot: "bg-[#163A2C]" },
 };
 

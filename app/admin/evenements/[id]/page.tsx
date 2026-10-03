@@ -1,11 +1,12 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, MapPin, Clock, RadioTower, Users, Timer, Activity } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, RadioTower, Users, Timer, Activity, Trash2, Loader } from "lucide-react";
 import StatsCard from "@/components/cards/StatsCard";
 import DonutCard from "@/components/cards/DonutCard";
 import ListCard from "@/components/cards/ListCard";
 import { useEffect, useState } from "react";
 import axios from "@/core/axios";
+import { toast } from "sonner";
 
 function MiniBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0? Math.round((value/max)*100) : 0;
@@ -24,10 +25,38 @@ export default function EvenementDetailPage() {
   const router = useRouter();
   const [e, setE] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     axios.get(`/admin/evenements/${id}`).then(r => setE(r.data.data || r.data)).finally(()=>setLoading(false));
+    
+    // Charger les participants
+    setLoadingParticipants(true);
+    axios.get(`/admin/evenements/${id}/participants`)
+      .then(r => setParticipants(r.data.data || r.data || []))
+      .catch(err => {
+        console.error("Erreur chargement participants:", err);
+        toast.error("Erreur lors du chargement des participants");
+      })
+      .finally(()=>setLoadingParticipants(false));
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
+    
+    try {
+      setDeleting(true);
+      await axios.delete(`/admin/evenements/${id}`);
+      toast.success("Événement supprimé avec succès");
+      router.push("/admin/evenements");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Erreur lors de la suppression");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) return <div className="py-16 text-center bg-white rounded-2xl border">Chargement RGE...</div>;
   if (!e) return <div className="py-16 text-center">Événement introuvable</div>;
@@ -38,11 +67,11 @@ export default function EvenementDetailPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-4">
         <button onClick={()=>router.back()} className="p-2.5 bg-white border border-[#163A2C]/10 rounded-xl"><ArrowLeft size={18}/></button>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-4 items-center flex-1">
           <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#163A2C] shrink-0">
             <img src={e.image || "/images/emission (3).jpg"} alt={e.titre} className="w-full h-full object-cover" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-black text-[#163A2C]">{e.titre}</h1>
             <p className="text- text-[#163A2C]/60 flex items-center gap-2 mt-1">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F0A93E]/15 text-[#9A6A1E] text- font-black uppercase"><RadioTower size={10}/> {e.type}</span>
@@ -50,6 +79,18 @@ export default function EvenementDetailPage() {
             </p>
           </div>
         </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-3 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl transition disabled:opacity-50 flex items-center gap-2"
+          title="Supprimer l'événement"
+        >
+          {deleting ? (
+            <Loader size={18} className="animate-spin" />
+          ) : (
+            <Trash2 size={18} />
+          )}
+        </button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -96,6 +137,48 @@ export default function EvenementDetailPage() {
       <div className="bg-white rounded-2xl border border-[#163A2C]/10 p-6">
         <p className="text- font-black uppercase tracking-widest text-[#163A2C]/40 mb-2">Description</p>
         <p className="text-sm text-[#163A2C]/80 leading-relaxed">{e.description || "Aucune description"}</p>
+      </div>
+
+      {/* Participants */}
+      <div className="bg-white rounded-2xl border border-[#163A2C]/10 overflow-hidden">
+        <div className="px-6 py-4 border-b border-[#163A2C]/5 flex items-center justify-between">
+          <h3 className="font-black text-[#163A2C] text-sm flex items-center gap-2"><Users size={16}/> Participants ({participants.length})</h3>
+        </div>
+        {loadingParticipants ? (
+          <div className="p-6 text-center text-[#163A2C]/60">
+            <Loader size={20} className="animate-spin mx-auto mb-2" />
+            Chargement...
+          </div>
+        ) : participants.length === 0 ? (
+          <div className="p-6 text-center text-[#163A2C]/60">
+            Aucun participant pour le moment
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-[#163A2C]/5">
+                  <th className="px-6 py-3 text-left font-bold text-[#163A2C]/70">Nom</th>
+                  <th className="px-6 py-3 text-left font-bold text-[#163A2C]/70">Email</th>
+                  <th className="px-6 py-3 text-left font-bold text-[#163A2C]/70">Téléphone</th>
+                  <th className="px-6 py-3 text-left font-bold text-[#163A2C]/70">Date d'inscription</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#163A2C]/5">
+                {participants.map((p: any) => (
+                  <tr key={p.id} className="hover:bg-[#163A2C]/5">
+                    <td className="px-6 py-3 font-semibold text-[#163A2C]">{p.nom_complet || p.name || "—"}</td>
+                    <td className="px-6 py-3 text-[#163A2C]/70">{p.email || "—"}</td>
+                    <td className="px-6 py-3 text-[#163A2C]/70">{p.phone || p.telephone || "—"}</td>
+                    <td className="px-6 py-3 text-[#163A2C]/70">
+                      {p.created_at ? new Date(p.created_at).toLocaleDateString("fr-FR") : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

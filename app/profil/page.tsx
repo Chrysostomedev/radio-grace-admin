@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProfile } from '@/hooks/admin/useProfile';
-import { User, Mail, Phone, MapPin, Lock, Save, Loader } from 'lucide-react';
+import { User, Mail, Phone, Lock, Save, Loader, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilPage() {
@@ -23,19 +23,41 @@ export default function ProfilPage() {
     password_confirmation: '',
   });
 
+  // State pour afficher/masquer les mots de passe
+  const [showPasswords, setShowPasswords] = useState({
+    password_actuel: false,
+    password: false,
+    password_confirmation: false,
+  });
+
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   // Initialiser le formulaire quand le profil est chargé
   const [isFormInitialized, setIsFormInitialized] = useState(false);
-  if (profile && !isFormInitialized) {
-    setFormData({
-      prenom: profile.prenom || '',
-      nom: profile.nom || '',
-      email: profile.email || '',
-      phone: profile.phone || '',
-    });
-    setIsFormInitialized(true);
-  }
+  
+  useEffect(() => {
+    if (profile && !isFormInitialized) {
+      setFormData({
+        prenom: profile.prenom || '',
+        nom: profile.nom || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+      });
+      setIsFormInitialized(true);
+    }
+  }, [profile, isFormInitialized]);
+
+  // Validations du mot de passe en temps réel
+  const passwordValidation = {
+    hasUppercase: /[A-Z]/.test(passwordForm.password),
+    hasLowercase: /[a-z]/.test(passwordForm.password),
+    hasDigit: /\d/.test(passwordForm.password),
+    hasSpecialChar: /[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>\/?]/.test(passwordForm.password),
+    hasMinLength: passwordForm.password.length >= 8,
+  };
+
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean);
+  const passwordsMatch = passwordForm.password === passwordForm.password_confirmation;
 
   const handleSubmitProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,13 +80,13 @@ export default function ProfilPage() {
       return;
     }
 
-    if (passwordForm.password !== passwordForm.password_confirmation) {
-      toast.error('Les nouveaux mots de passe ne correspondent pas');
+    if (!isPasswordValid) {
+      toast.error('Le mot de passe ne respecte pas tous les critères');
       return;
     }
 
-    if (passwordForm.password.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+    if (!passwordsMatch) {
+      toast.error('Les nouveaux mots de passe ne correspondent pas');
       return;
     }
 
@@ -75,6 +97,11 @@ export default function ProfilPage() {
       password_actuel: '',
       password: '',
       password_confirmation: '',
+    });
+    setShowPasswords({
+      password_actuel: false,
+      password: false,
+      password_confirmation: false,
     });
     setShowPasswordForm(false);
   };
@@ -195,8 +222,12 @@ export default function ProfilPage() {
 
         {!showPasswordForm ? (
           <button
-            onClick={() => setShowPasswordForm(true)}
-            className="px-6 py-3 bg-[#163A2C]/10 hover:bg-[#163A2C]/20 text-[#163A2C] font-bold rounded-lg transition-all"
+            type="button"
+            onClick={() => {
+              console.log('Clicking change password button, showPasswordForm=', showPasswordForm);
+              setShowPasswordForm(true);
+            }}
+            className="px-6 py-3 bg-[#163A2C]/10 hover:bg-[#163A2C]/20 text-[#163A2C] font-bold rounded-lg transition-all cursor-pointer"
           >
             Changer le mot de passe
           </button>
@@ -205,51 +236,120 @@ export default function ProfilPage() {
             {/* Mot de passe actuel */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">Mot de passe actuel *</label>
-              <input
-                type="password"
-                value={passwordForm.password_actuel}
-                onChange={(e) => setPasswordForm({ ...passwordForm, password_actuel: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#163A2C]/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F0A93E]"
-                placeholder="Entrez votre mot de passe actuel"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPasswords.password_actuel ? 'text' : 'password'}
+                  value={passwordForm.password_actuel}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, password_actuel: e.target.value })}
+                  className="w-full px-4 py-2.5 pr-10 border border-[#163A2C]/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F0A93E]"
+                  placeholder="Entrez votre mot de passe actuel"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords({ ...showPasswords, password_actuel: !showPasswords.password_actuel })}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#163A2C]/60 hover:text-[#163A2C]"
+                >
+                  {showPasswords.password_actuel ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             {/* Nouveau mot de passe */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">Nouveau mot de passe *</label>
-              <input
-                type="password"
-                value={passwordForm.password}
-                onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#163A2C]/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F0A93E]"
-                placeholder="Minimum 8 caractères, majuscules, minuscules, chiffres et symboles"
-                required
-              />
-              <p className="text-xs text-[#163A2C]/60 mt-2">
-                Doit contenir: majuscules, minuscules, chiffres et caractères spéciaux
-              </p>
+              <div className="relative">
+                <input
+                  type={showPasswords.password ? 'text' : 'password'}
+                  value={passwordForm.password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                  className="w-full px-4 py-2.5 pr-10 border border-[#163A2C]/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F0A93E]"
+                  placeholder="Minimum 8 caractères"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#163A2C]/60 hover:text-[#163A2C]"
+                >
+                  {showPasswords.password ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              {/* Critères de validation */}
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${passwordValidation.hasMinLength ? 'bg-[#1E9D55]' : 'bg-[#163A2C]/20'}`} />
+                  <span className={passwordValidation.hasMinLength ? 'text-[#1E9D55]' : 'text-[#163A2C]/60'}>
+                    Au moins 8 caractères
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${passwordValidation.hasUppercase ? 'bg-[#1E9D55]' : 'bg-[#163A2C]/20'}`} />
+                  <span className={passwordValidation.hasUppercase ? 'text-[#1E9D55]' : 'text-[#163A2C]/60'}>
+                    Une majuscule (A-Z)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${passwordValidation.hasLowercase ? 'bg-[#1E9D55]' : 'bg-[#163A2C]/20'}`} />
+                  <span className={passwordValidation.hasLowercase ? 'text-[#1E9D55]' : 'text-[#163A2C]/60'}>
+                    Une minuscule (a-z)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${passwordValidation.hasDigit ? 'bg-[#1E9D55]' : 'bg-[#163A2C]/20'}`} />
+                  <span className={passwordValidation.hasDigit ? 'text-[#1E9D55]' : 'text-[#163A2C]/60'}>
+                    Un chiffre (0-9)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${passwordValidation.hasSpecialChar ? 'bg-[#1E9D55]' : 'bg-[#163A2C]/20'}`} />
+                  <span className={passwordValidation.hasSpecialChar ? 'text-[#1E9D55]' : 'text-[#163A2C]/60'}>
+                    Un caractère spécial (!@#$%^&* etc.)
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Confirmation mot de passe */}
             <div>
               <label className="block text-sm font-bold text-[#163A2C] mb-2">Confirmer le mot de passe *</label>
-              <input
-                type="password"
-                value={passwordForm.password_confirmation}
-                onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#163A2C]/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F0A93E]"
-                placeholder="Confirmez le nouveau mot de passe"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPasswords.password_confirmation ? 'text' : 'password'}
+                  value={passwordForm.password_confirmation}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
+                  className="w-full px-4 py-2.5 pr-10 border border-[#163A2C]/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F0A93E]"
+                  placeholder="Confirmez le nouveau mot de passe"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords({ ...showPasswords, password_confirmation: !showPasswords.password_confirmation })}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#163A2C]/60 hover:text-[#163A2C]"
+                >
+                  {showPasswords.password_confirmation ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {passwordForm.password_confirmation && !passwordsMatch && (
+                <p className="text-xs text-red-500 mt-2">Les mots de passe ne correspondent pas</p>
+              )}
+              {passwordForm.password_confirmation && passwordsMatch && (
+                <p className="text-xs text-[#1E9D55] mt-2">✓ Les mots de passe correspondent</p>
+              )}
             </div>
 
             {/* Boutons */}
             <div className="flex gap-4 pt-4">
+              {(!isPasswordValid || !passwordsMatch) && (
+                <p className="text-xs text-red-600 mb-2">
+                  Veuillez remplir tous les critères et vérifier que les mots de passe correspondent.
+                </p>
+              )}
               <button
                 type="submit"
-                disabled={isUpdatingPassword}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-[#F0A93E] to-[#CA8A04] hover:from-[#CA8A04] hover:to-[#9A6A1E] text-[#163A2C] font-bold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={isUpdatingPassword || !isPasswordValid || !passwordsMatch}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-[#F0A93E] to-[#CA8A04] hover:from-[#CA8A04] hover:to-[#9A6A1E] text-[#163A2C] font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isUpdatingPassword ? (
                   <>

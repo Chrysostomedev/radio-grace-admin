@@ -17,7 +17,7 @@ export default function BoutiquePage() {
 
   const FIELDS: FieldConfig[] = [
     { name: "name", label: "Nom produit (ex: Chapelet, Bible)", type: "text", required: true },
-    { name: "categorie", label: "Catégorie", type: "select", required: true, options: [{label:"Livre",value:"livre"},{label:"Textile",value:"textile"},{label:"Audio",value:"audio"},{label:"Accessoire / Chapelet",value:"accessoire"},{label:"Bible",value:"bible"}] },
+    { name: "categorie", label: "Catégorie", type: "select", required: true, options: [{label:"Livrets & Bibles",value:"livrets_bibles"},{label:"Gadgets",value:"gadgets"},{label:"Clé USB (enseignement)",value:"cle_usb_enseignement"},{label:"Autre",value:"autre"}] },
     { name: "prix", label: "Prix FCFA", type: "text", required: true },
     { name: "stock", label: "Stock", type: "text", required: true },
     { name: "images", label: "Images (plusieurs)", type: "media", accept: "image/*", previewType: "auto", multiple: true } as any,
@@ -63,8 +63,8 @@ export default function BoutiquePage() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto">
-          {["all","livre","bible","textile","audio","accessoire"].map(c=>(
-            <button key={c} onClick={()=>setCategorie(c)} className={`px-4 py-2 rounded-full text-xs font-bold border ${categorie===c? "bg-[#163A2C] text-white":"bg-white text-[#163A2C]/60"}`}>{c==="all"? "Tous": c}</button>
+          {["all","livrets_bibles","gadgets","cle_usb_enseignement","autre"].map(c=>(
+            <button key={c} onClick={()=>setCategorie(c)} className={`px-4 py-2 rounded-full text-xs font-bold border ${categorie===c? "bg-[#163A2C] text-white":"bg-white text-[#163A2C]/60"}`}>{c==="all"? "Tous": c==="livrets_bibles"? "Livrets & Bibles" : c==="gadgets"? "Gadgets" : c==="cle_usb_enseignement"? "Clé USB" : "Autre"}</button>
           ))}
         </div>
 

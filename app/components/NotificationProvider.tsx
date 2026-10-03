@@ -13,21 +13,35 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const { token, loading } = useNotifications();
 
   useEffect(() => {
+    // Flag pour éviter les exécutions multiples
+    let isMounted = true;
+
     // 1. Injecter la configuration Firebase dans le window
-    injectFirebaseConfig();
+    if (isMounted) {
+      injectFirebaseConfig();
+    }
 
     // 2. Enregistrer le Service Worker avec la config injectée
     //    (uniquement si le navigateur le supporte)
-    if ('serviceWorker' in navigator) {
+    if (isMounted && 'serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/firebase-messaging-sw.js')
         .then((registration) => {
-          console.log('✅ Service Worker registered:', registration);
+          if (isMounted) {
+            console.log('✅ Service Worker registered:', registration);
+          }
         })
         .catch((error) => {
-          console.error('❌ Service Worker registration failed:', error);
+          if (isMounted) {
+            console.error('❌ Service Worker registration failed:', error);
+          }
         });
     }
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (!loading && !token) {

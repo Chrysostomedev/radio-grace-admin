@@ -14,11 +14,11 @@ import type { Programme } from "@/types/admin";
 
 const CATEGORIES = [
   { id: "all", label: "Toutes" },
-  { id: "ACCLAMEZ", label: "Acclamez" },
-  { id: "PRIERE", label: "Prière" },
-  { id: "JEUNESSE", label: "Jeunesse" },
-  { id: "ACTUALITE", label: "Actualités" },
-  { id: "MUSIQUE", label: "Musique" },
+  { id: "SOCIETE", label: "Société" },
+  { id: "PRIERE_ENSEIGNEMENT", label: "Prière & enseignement" },
+  { id: "DIVERTISSEMENT", label: "Divertissement" },
+  { id: "REPORTAGE", label: "Reportage" },
+  { id: "MUSIQUE_LOUANGE", label: "Musique (Louange & adoration)" },
 ] as const;
 
 const JOURS = [

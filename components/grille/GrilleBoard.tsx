@@ -11,6 +11,7 @@ interface GrilleBoardProps {
   weekStart: Date;
   onDropSlot: (jour: string, heure: string, programme: any) => void;
   onCreneuClick: (creneau: ProgrammeGrille) => void;
+  onAddSlot?: (jour: string, heure: string) => void;
   onRefresh?: () => void; // Callback pour rafraîchir la grille après une action
 }
 
@@ -68,6 +69,7 @@ export default function GrilleBoard({
   weekStart,
   onDropSlot,
   onCreneuClick,
+  onAddSlot,
   onRefresh,
 }: GrilleBoardProps) {
   const [dragover, setDragover] = useState<string | null>(null);

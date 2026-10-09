@@ -16,12 +16,12 @@ services:
         NEXT_PUBLIC_FIREBASE_VAPID_KEY: ${NEXT_PUBLIC_FIREBASE_VAPID_KEY}
         NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${NEXT_PUBLIC_FIREBASE_DATABASE_URL}
     env_file:
-      - .env            # secrets serveur (runtime)
+      - .env
     environment:
       NODE_ENV: production
-    # Exposé uniquement en local : c'est Nginx/Caddy qui sert le public en HTTPS
-    ports:
-      - "${BIND_IP:-127.0.0.1}:3000:3000"
+    # Pas de port publié : Caddy joint l'app via le réseau Docker (radio-grace-admin:3000)
+    networks:
+      - rge-network
     restart: unless-stopped
     init: true
     security_opt:
@@ -35,3 +35,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+networks:
+  rge-network:
+    name: laravel-backend_rge-network
+    external: true

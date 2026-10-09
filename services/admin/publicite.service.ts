@@ -50,13 +50,13 @@ export const publiciteService = {
   /**
    * Crée une nouvelle publicité
    */
-  create: (payload: FormData): Promise<ApiResponse<Publicite>> =>
+  create: (payload: FormData | Record<string, any>): Promise<ApiResponse<Publicite>> =>
     post(`/admin/publicites`, payload),
 
   /**
    * Modifie une publicité existante
    */
-  update: (id: number, payload: FormData): Promise<ApiResponse<Publicite>> =>
+  update: (id: number, payload: FormData | Record<string, any>): Promise<ApiResponse<Publicite>> =>
     put(`/admin/publicites/${id}`, payload),
 
   /**

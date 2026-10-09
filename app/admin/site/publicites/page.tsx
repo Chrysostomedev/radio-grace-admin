@@ -78,8 +78,8 @@ export default function PublicitesPage() {
 
   const stats = {
     total: publicites.length,
-    actives: publicites.filter(p => p.actif).length,
-    inactives: publicites.filter(p => !p.actif).length,
+    actives: publicites.filter(p => p.is_active).length,
+    inactives: publicites.filter(p => !p.is_active).length,
   };
 
   return (
